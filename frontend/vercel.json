@@ -1,9 +1,15 @@
 {
   "rewrites": [
-    {
-      "source": "/",
-      "destination": "/html/login.html"
-    }
+    { "source": "/", "destination": "/html/login.html" },
+    { "source": "/login", "destination": "/html/login.html" },
+    { "source": "/register", "destination": "/html/register.html" },
+    { "source": "/dashboard", "destination": "/html/dashboard.html" },
+    { "source": "/booking", "destination": "/html/booking.html" },
+    { "source": "/equipment", "destination": "/html/equipment.html" },
+    { "source": "/maintenance", "destination": "/html/maintenance.html" },
+    { "source": "/reports", "destination": "/html/reports.html" },
+    { "source": "/css/*", "destination": "/css/:splat" },
+    { "source": "/js/*", "destination": "/js/:splat" },
+    { "source": "/api/*", "destination": "https://sportsvault-production.up.railway.app/api/:splat" }
   ]
 }
-

@@ -1,6 +1,9 @@
 // SportVault Authentication Module
 
-const API_BASE_URL = 'http://localhost:3000/api';  // change port to match
+// Use the deployed Railway backend URL in production, or localhost for development
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000/api'
+    : 'https://sportsvault-production.up.railway.app/api';
 
 
 // Check if user is authenticated
