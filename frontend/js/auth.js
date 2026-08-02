@@ -70,6 +70,15 @@ async function apiRequest(endpoint, options = {}) {
         const response = await fetch(url, config);
         const data = await response.json();
 
+        // Token expired or invalid - clear stored auth and send to login
+        if (response.status === 401) {
+            clearAuth();
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+                throw new Error('Your session has expired. Please login again.');
+            }
+        }
+
         if (!response.ok) {
             throw new Error(data.message || 'Request failed');
         }
