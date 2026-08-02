@@ -13,7 +13,8 @@ const pool = new Pool({
     connectionTimeoutMillis: 10000, // increased for slower networks
     ssl: process.env.DB_SSL === 'true'
         ? { rejectUnauthorized: false }   // required for Supabase
-        : false
+        : false,
+    family: 4                       // force IPv4 to avoid IPv6 ENETUNREACH on Railway
 });
 
 // Test connection

@@ -10,7 +10,8 @@ const pool = new Pool({
     database: process.env.DB_NAME || 'postgres',
     ssl: process.env.DB_SSL === 'true'
         ? { rejectUnauthorized: false }
-        : false
+        : false,
+    family: 4
 });
 
 const setupDatabase = async () => {
