@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipment - SportVault</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/dashboard" class="navbar-brand">SportVault</a>
+        <ul class="navbar-nav">
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/equipment" class="active">Equipment</a></li>
+            <li><a href="/booking">Bookings</a></li>
+            <li class="admin-only"><a href="/maintenance">Maintenance</a></li>
+            <li class="admin-only"><a href="/reports">Reports</a></li>
+        </ul>
+        <div class="navbar-user">
+            <span id="user-name"></span>
+            <span id="user-role" style="font-size: 0.8rem; opacity: 0.8;"></span>
+            <button id="logout-btn" class="btn btn-sm" style="background: transparent; border: 1px solid white; color: white;">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Equipment Management</h1>
+            <p>View and manage sports equipment inventory</p>
+        </div>
+
+        <div id="alert-container"></div>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <div style="flex: 1; max-width: 300px;">
+                <input type="text" class="form-control" id="search-equipment" placeholder="Search equipment...">
+            </div>
+            <div class="admin-only">
+                <button class="btn btn-primary" onclick="openModal('add-equipment-modal')">Add Equipment</button>
+            </div>
+        </div>
+
+        <!-- Student Only: My Issued Equipment -->
+        <div class="student-only card">
+            <div class="card-header">
+                <h3 class="card-title">My Issued Equipment</h3>
+            </div>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Equipment</th>
+                            <th>Category</th>
+                            <th>Issue Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="my-equipment-tbody">
+                        <tr>
+                            <td colspan="4" class="empty-state">No issued equipment</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- All Equipment -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">All Equipment</h3>
+            </div>
+            <div id="equipment-container" class="equipment-grid">
+                <div class="empty-state">Loading equipment...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Equipment Modal (Admin Only) -->
+    <div id="add-equipment-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Equipment</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="add-equipment-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="equipment-name">Equipment Name</label>
+                        <input type="text" class="form-control" id="equipment-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="equipment-category">Category</label>
+                        <select class="form-control" id="equipment-category" required>
+                            <option value="">Select Category</option>
+                            <option value="Cricket">Cricket</option>
+                            <option value="Football">Football</option>
+                            <option value="Basketball">Basketball</option>
+                            <option value="Tennis">Tennis</option>
+                            <option value="Badminton">Badminton</option>
+                            <option value="Volleyball">Volleyball</option>
+                            <option value="Hockey">Hockey</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="equipment-description">Description</label>
+                        <textarea class="form-control" id="equipment-description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="equipment-quantity">Total Quantity</label>
+                        <input type="number" class="form-control" id="equipment-quantity" min="1" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeModal('add-equipment-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Equipment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Equipment Modal (Admin Only) -->
+    <div id="edit-equipment-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Equipment</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="edit-equipment-form">
+                <input type="hidden" id="edit-equipment-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="edit-equipment-name">Equipment Name</label>
+                        <input type="text" class="form-control" id="edit-equipment-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-equipment-category">Category</label>
+                        <select class="form-control" id="edit-equipment-category" required>
+                            <option value="">Select Category</option>
+                            <option value="Cricket">Cricket</option>
+                            <option value="Football">Football</option>
+                            <option value="Basketball">Basketball</option>
+                            <option value="Tennis">Tennis</option>
+                            <option value="Badminton">Badminton</option>
+                            <option value="Volleyball">Volleyball</option>
+                            <option value="Hockey">Hockey</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-equipment-description">Description</label>
+                        <textarea class="form-control" id="edit-equipment-description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-equipment-quantity">Total Quantity</label>
+                        <input type="number" class="form-control" id="edit-equipment-quantity" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-equipment-status">Status</label>
+                        <select class="form-control" id="edit-equipment-status" required>
+                            <option value="available">Available</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="damaged">Damaged</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeModal('edit-equipment-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Equipment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+<!-- Copyright -->
+    <footer class="credits">
+        <h3>Copyright</h3>
+        <div class="credits-divider"></div>
+        <p><strong>Developed by:</strong> Krishna Sudhir Patil</p>
+        <p><strong>Email:</strong> <a href="mailto:informkrishn09@gmail.com">informkrishn09@gmail.com</a></p>
+        <p><strong>Contact:</strong> +918767959639</p>
+        <p><strong>Currently studying in:</strong> NMIMS Hyderabad</p>
+    </footer>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/equipment.js"></script>
+</body>
+</html>

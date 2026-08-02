@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - SportVault</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>SportVault</h1>
+                <p>Student Registration</p>
+            </div>
+
+            <div id="error-message" class="alert alert-danger hidden"></div>
+
+            <form id="register-form">
+                <div class="form-group">
+                    <label class="form-label" for="studentId">Student ID</label>
+                    <input type="text" class="form-control" id="studentId" name="studentId" required placeholder="Enter your Student ID (provided by admin)">
+                    <small style="color: #666;">Student ID must be created by admin first</small>
+                </div>
+
+<div class="form-group">
+                    <label class="form-label" for="name">Full Name</label>
+                    <input type="text" class="form-control" id="name" name="name" required placeholder="Enter your full name">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="school">School</label>
+                    <input type="text" class="form-control" id="school" name="school" required placeholder="Enter your school name">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required placeholder="Enter your email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required placeholder="Create a password (min 6 characters)">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="confirmPassword">Confirm Password</label>
+                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Register</button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Already have an account? <a href="/login">Login here</a></p>
+            </div>
+        </div>
+    </div>
+
+<!-- Copyright -->
+    <footer class="credits">
+        <h3>Copyright</h3>
+        <div class="credits-divider"></div>
+        <p><strong>Developed by:</strong> Krishna Sudhir Patil</p>
+        <p><strong>Email:</strong> <a href="mailto:informkrishn09@gmail.com">informkrishn09@gmail.com</a></p>
+        <p><strong>Contact:</strong> +918767959639</p>
+        <p><strong>Currently studying in:</strong> NMIMS Hyderabad</p>
+    </footer>
+
+    <script src="../js/auth.js"></script>
+    <script>
+        // Redirect if already logged in
+        if (redirectIfAuth()) {
+            // Already redirected
+        } else {
+            document.getElementById('register-form').addEventListener('submit', handleRegister);
+        }
+    </script>
+</body>
+</html>

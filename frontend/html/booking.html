@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venue Bookings - SportVault</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/dashboard" class="navbar-brand">SportVault</a>
+        <ul class="navbar-nav">
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/booking" class="active">Bookings</a></li>
+            <li class="admin-only"><a href="/reports">Reports</a></li>
+        </ul>
+        <div class="navbar-user">
+            <span id="user-name"></span>
+            <span id="user-role" style="font-size: 0.8rem; opacity: 0.8;"></span>
+            <button id="logout-btn" class="btn btn-sm" style="background: transparent; border: 1px solid white; color: white;">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Venue Bookings</h1>
+            <p>Book sports venues and manage your reservations</p>
+        </div>
+
+        <div id="alert-container"></div>
+
+        <!-- All Bookings - Show for Admin -->
+        <div class="card admin-only">
+            <div class="card-header">
+                <h3 class="card-title">All Bookings</h3>
+                <div>
+                    <button class="btn btn-sm" data-filter="all">All</button>
+                    <button class="btn btn-sm" data-filter="confirmed">Confirmed</button>
+                    <button class="btn btn-sm" data-filter="cancelled">Cancelled</button>
+                </div>
+            </div>
+            <div id="bookings-container" class="booking-timeline">
+                <div class="empty-state">Loading bookings...</div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <!-- Student: Booking Form -->
+            <div class="card student-only" style="flex: 1;">
+                <div class="card-header">
+                    <h3 class="card-title">Book a Venue</h3>
+                </div>
+                <form id="booking-form">
+                    <div class="form-group">
+                        <label class="form-label" for="booking-venue">Select Venue</label>
+                        <select class="form-control" id="booking-venue" required>
+                            <option value="">Loading venues...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="booking-date">Booking Date</label>
+                        <input type="date" class="form-control" id="booking-date" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="booking-start-time">Start Time</label>
+                            <input type="time" class="form-control" id="booking-start-time" min="10:00" max="18:00" required>
+                            <small style="color: #666;">Available: 10:00 AM - 7:00 PM (Max 2 hours)</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="booking-end-time">End Time</label>
+                            <input type="time" class="form-control" id="booking-end-time" min="10:00" max="19:00" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="booking-purpose">Purpose (Optional)</label>
+                        <input type="text" class="form-control" id="booking-purpose" placeholder="e.g., Practice match, Training session">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="booking-approx-students">Approx Students Playing</label>
+                        <input type="number" class="form-control" id="booking-approx-students" min="1" placeholder="e.g., 20">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Book Venue</button>
+                </form>
+            </div>
+
+            <!-- Available Slots Display -->
+            <div class="card student-only" style="flex: 1;">
+                <div class="card-header">
+                    <h3 class="card-title">Available Time Slots</h3>
+                </div>
+                <div id="slots-container">
+                    <p style="color: #666; padding: 1rem;">Select a venue and date to view available slots</p>
+                </div>
+            </div>
+
+            <!-- My Bookings - For Student -->
+            <div class="card student-only" style="flex: 1;">
+                <div class="card-header">
+                    <h3 class="card-title">My Confirmed Bookings</h3>
+                </div>
+                <div id="my-bookings-container" class="booking-timeline">
+                    <div class="empty-state">Loading your bookings...</div>
+                </div>
+            </div>
+
+            <!-- Available Venues - For both Admin and Student -->
+            <div class="card" style="flex: 1;">
+                <div class="card-header">
+                    <h3 class="card-title">Available Venues</h3>
+                </div>
+                <div id="venues-info">
+                    <p>Loading venues...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Copyright -->
+    <footer class="credits">
+        <h3>Copyright</h3>
+        <div class="credits-divider"></div>
+        <p><strong>Developed by:</strong> Krishna Sudhir Patil</p>
+        <p><strong>Email:</strong> <a href="mailto:informkrishn09@gmail.com">informkrishn09@gmail.com</a></p>
+        <p><strong>Contact:</strong> +918767959639</p>
+        <p><strong>Currently studying in:</strong> NMIMS Hyderabad</p>
+    </footer>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/booking.js"></script>
+</body>
+</html>

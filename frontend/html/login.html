@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SportVault</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>SportVault</h1>
+                <p>Sports Equipment & Venue Management System</p>
+            </div>
+
+            <div id="error-message" class="alert alert-danger hidden"></div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required placeholder="Enter your email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required placeholder="Enter your password">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Login</button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="/register">Register here</a></p>
+                <p style="margin-top: 1rem; font-size: 0.85rem; color: #666;">
+                    Default Admin: admin@sportvault.com / admin123
+                </p>
+            </div>
+        </div>
+    </div>
+
+<!-- Copyright -->
+    <footer class="credits">
+        <h3>Copyright</h3>
+        <div class="credits-divider"></div>
+        <p><strong>Developed by:</strong> Krishna Sudhir Patil</p>
+        <p><strong>Email:</strong> <a href="mailto:informkrishn09@gmail.com">informkrishn09@gmail.com</a></p>
+        <p><strong>Contact:</strong> +918767959639</p>
+        <p><strong>Currently studying in:</strong> NMIMS Hyderabad</p>
+    </footer>
+
+    <script src="../js/auth.js"></script>
+    <script>
+        // Redirect if already logged in
+        if (redirectIfAuth()) {
+            // Already redirected
+        } else {
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+        }
+    </script>
+</body>
+</html>

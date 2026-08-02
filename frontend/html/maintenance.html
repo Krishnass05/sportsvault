@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance - SportVault</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/dashboard" class="navbar-brand">SportVault</a>
+        <ul class="navbar-nav">
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/equipment">Equipment</a></li>
+            <li><a href="/booking">Bookings</a></li>
+            <li><a href="/maintenance" class="active">Maintenance</a></li>
+            <li class="admin-only"><a href="/reports">Reports</a></li>
+        </ul>
+        <div class="navbar-user">
+            <span id="user-name"></span>
+            <span id="user-role" style="font-size: 0.8rem; opacity: 0.8;"></span>
+            <button id="logout-btn" class="btn btn-sm" style="background: transparent; border: 1px solid white; color: white;">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Maintenance Records</h1>
+            <p>Track equipment maintenance and repairs</p>
+        </div>
+
+        <div id="alert-container"></div>
+
+        <!-- Maintenance Stats -->
+        <div id="maintenance-stats" class="stats-grid" style="margin-bottom: 2rem;">
+            <!-- Stats loaded dynamically -->
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar admin-only">
+            <h3 class="card-title">Maintenance Management</h3>
+            <button class="btn btn-primary" onclick="openModal('add-maintenance-modal')">Report Issue</button>
+        </div>
+
+        <!-- Maintenance Records -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">All Maintenance Records</h3>
+            </div>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Equipment</th>
+                            <th>Issue Description</th>
+                            <th>Reported By</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="maintenance-tbody">
+                        <tr>
+                            <td colspan="6" class="empty-state">Loading maintenance records...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Maintenance Modal (Admin Only) -->
+    <div id="add-maintenance-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Report Equipment Issue</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="add-maintenance-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="maintenance-equipment">Select Equipment</label>
+                        <select class="form-control" id="maintenance-equipment" required>
+                            <option value="">Loading equipment...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="maintenance-description">Issue Description</label>
+                        <textarea class="form-control" id="maintenance-description" rows="4" placeholder="Describe the issue in detail..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="maintenance-cost">Estimated Repair Cost ($)</label>
+                        <input type="number" class="form-control" id="maintenance-cost" min="0" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="maintenance-notes">Additional Notes</label>
+                        <textarea class="form-control" id="maintenance-notes" rows="2" placeholder="Any additional information..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeModal('add-maintenance-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Report Issue</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Maintenance Modal -->
+    <div id="view-maintenance-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Maintenance Details</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Equipment</label>
+                    <p id="view-equipment-name"></p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Issue Description</label>
+                    <p id="view-issue-description"></p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reported By</label>
+                    <p id="view-reported-by"></p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reported Date</label>
+                    <p id="view-reported-date"></p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <p id="view-status"></p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Repair Cost</label>
+                    <p id="view-repair-cost"></p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Completed Date</label>
+                    <p id="view-completed-date"></p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <p id="view-notes"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn" onclick="closeModal('view-maintenance-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+<!-- Copyright -->
+    <footer class="credits">
+        <h3>Copyright</h3>
+        <div class="credits-divider"></div>
+        <p><strong>Developed by:</strong> Krishna Sudhir Patil</p>
+        <p><strong>Email:</strong> <a href="mailto:informkrishn09@gmail.com">informkrishn09@gmail.com</a></p>
+        <p><strong>Contact:</strong> +918767959639</p>
+        <p><strong>Currently studying in:</strong> NMIMS Hyderabad</p>
+    </footer>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/maintenance.js"></script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - SportVault</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/dashboard" class="navbar-brand">SportVault</a>
+        <ul class="navbar-nav">
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/booking">Bookings</a></li>
+            <li><a href="/reports" class="active">Reports</a></li>
+        </ul>
+        <div class="navbar-user">
+            <span id="user-name"></span>
+            <span id="user-role" style="font-size: 0.8rem; opacity: 0.8;"></span>
+            <button id="logout-btn" class="btn btn-sm" style="background: transparent; border: 1px solid white; color: white;">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Booking Reports</h1>
+            <p>View and download monthly booking reports</p>
+        </div>
+
+        <div id="alert-container"></div>
+
+        <!-- Summary Stats -->
+        <div class="stats-grid">
+            <div class="stat-card navy">
+                <div class="stat-value" id="total-bookings-count">0</div>
+                <div class="stat-label">Total Bookings</div>
+            </div>
+            <div class="stat-card blue">
+                <div class="stat-value" id="active-students">0</div>
+                <div class="stat-label">Registered Students</div>
+            </div>
+            <div class="stat-card navy">
+                <div class="stat-value" id="active-venues-count">0</div>
+                <div class="stat-label">Active Venues</div>
+            </div>
+            <div class="stat-card blue">
+                <div class="stat-value" id="today-bookings-count">0</div>
+                <div class="stat-label">Today's Bookings</div>
+            </div>
+        </div>
+
+        <!-- Monthly Report -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Monthly Booking Report</h3>
+                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                    <label class="form-label" style="margin: 0;">Month:</label>
+                    <input type="month" class="form-control" id="report-month" style="width: auto;">
+                    <button class="btn btn-primary btn-sm" onclick="loadMonthlyReport()">Load Report</button>
+                    <button class="btn btn-secondary btn-sm" onclick="downloadMonthlyCSV()">Download CSV</button>
+                </div>
+            </div>
+
+            <div class="stats-grid" id="report-stats">
+                <div class="stat-card navy">
+                    <div class="stat-value" id="report-total">0</div>
+                    <div class="stat-label">Total Bookings</div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-value" id="report-confirmed">0</div>
+                    <div class="stat-label">Confirmed</div>
+                </div>
+                <div class="stat-card navy">
+                    <div class="stat-value" id="report-cancelled">0</div>
+                    <div class="stat-label">Cancelled</div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-value" id="report-student">0</div>
+                    <div class="stat-label">Student Bookings</div>
+                </div>
+            </div>
+
+            <div id="report-print-area">
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+<tr>
+                                    <th>Booked By</th>
+                                    <th>Venue</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Type</th>
+                                    <th>Approx Students</th>
+                                    <th>Purpose</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="report-bookings-tbody">
+                                <tr><td colspan="9" class="empty-state">Select a month and load report</td></tr>
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Copyright -->
+    <footer class="credits">
+        <h3>Copyright</h3>
+        <div class="credits-divider"></div>
+        <p><strong>Developed by:</strong> Krishna Sudhir Patil</p>
+        <p><strong>Email:</strong> <a href="mailto:informkrishn09@gmail.com">informkrishn09@gmail.com</a></p>
+        <p><strong>Contact:</strong> +918767959639</p>
+        <p><strong>Currently studying in:</strong> NMIMS Hyderabad</p>
+    </footer>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/reports.js"></script>
+</body>
+</html>

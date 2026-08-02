@@ -1,0 +1,61 @@
+SPORTVAULT - SHARE & RUN GUIDE
+================================
+
+STEP 1: CREATE ZIP FILE
+-----------------------
+1. Go to: C:\Users\krishna patil\OneDrive\Desktop\
+2. Right-click on "sportsvault" folder
+3. Select: Send to > Compressed (zipped) folder
+4. Rename to: sportsvault.zip
+5. Share this zip file with your partner
+
+STEP 2: PARTNER SETUP
+---------------------
+1. Install Node.js: https://nodejs.org (LTS version)
+2. Install MySQL: https://mysql.com/downloads
+   - Remember the root password you set!
+
+STEP 3: EXTRACT & RUN
+---------------------
+1. Extract sportsvault.zip to Desktop
+2. Open Command Prompt/PowerShell
+3. Navigate to backend folder:
+   cd Desktop\sportsvault\backend
+
+4. Install dependencies:
+   npm install
+
+5. Create .env file in backend folder with:
+   DB_HOST=localhost
+   DB_USER=root
+   DB_PASSWORD=YOUR_MYSQL_PASSWORD
+   DB_NAME=sportsvault
+   JWT_SECRET=any_random_string_32_chars
+   PORT=3000
+
+6. Setup database:
+   node setup-db.js
+
+7. Start server:
+   npm start
+
+8. Open browser: http://localhost:3000
+
+STEP 4: FIRST LOGIN
+-------------------
+1. Click "Register" and create admin account
+2. Login with those credentials
+3. Start using SportVault!
+
+TEST ACCOUNTS (created by setup-db.js)
+--------------------------------------
+- Admin:  admin@sportvault.com / admin123
+- Student: student@sportvault.com / student123  (SAP ID: DUMMY001)
+
+TROUBLESHOOTING
+---------------
+- Port 3000 busy? Change PORT=3001 in .env
+- Database error? Check MySQL is running
+- Module not found? Run: npm install again
+
+For detailed help, see SETUP.md file in the project.
