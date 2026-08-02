@@ -11,7 +11,7 @@ exports.getAllVenues = async (req, res) => {
 
         query += ' ORDER BY name';
 
-        const [rows] = await db.execute(query, params);
+        const { rows } = await db.query(query, params);
         res.json({ venues: rows });
     } catch (error) {
         console.error('Get venues error:', error);
@@ -27,14 +27,14 @@ exports.createVenue = async (req, res) => {
             return res.status(400).json({ message: 'Venue name is required' });
         }
 
-        const [result] = await db.execute(
-            'INSERT INTO venues (name, location, capacity, description, is_active) VALUES (?, ?, ?, ?, TRUE)',
+        const result = await db.query(
+            'INSERT INTO venues (name, location, capacity, description, is_active) VALUES ($1, $2, $3, $4, TRUE) RETURNING id',
             [name, location || '', capacity || null, description || '']
         );
 
         res.status(201).json({
             message: 'Venue created successfully',
-            venueId: result.insertId
+            venueId: result.rows[0].id
         });
     } catch (error) {
         console.error('Create venue error:', error);
@@ -47,15 +47,15 @@ exports.updateVenue = async (req, res) => {
         const { id } = req.params;
         const { name, location, capacity, description, is_active } = req.body;
 
-        const [rows] = await db.execute('SELECT * FROM venues WHERE id = ?', [id]);
+        const { rows } = await db.query('SELECT * FROM venues WHERE id = $1', [id]);
         if (rows.length === 0) {
             return res.status(404).json({ message: 'Venue not found' });
         }
 
         const venue = rows[0];
 
-        await db.execute(
-            'UPDATE venues SET name = ?, location = ?, capacity = ?, description = ?, is_active = ? WHERE id = ?',
+        await db.query(
+            'UPDATE venues SET name = $1, location = $2, capacity = $3, description = $4, is_active = $5 WHERE id = $6',
             [
                 name || venue.name,
                 location !== undefined ? location : venue.location,
@@ -82,12 +82,12 @@ exports.toggleVenueStatus = async (req, res) => {
             return res.status(400).json({ message: 'is_active must be a boolean' });
         }
 
-        const [rows] = await db.execute('SELECT * FROM venues WHERE id = ?', [id]);
+        const { rows } = await db.query('SELECT * FROM venues WHERE id = $1', [id]);
         if (rows.length === 0) {
             return res.status(404).json({ message: 'Venue not found' });
         }
 
-        await db.execute('UPDATE venues SET is_active = ? WHERE id = ?', [is_active, id]);
+        await db.query('UPDATE venues SET is_active = $1 WHERE id = $2', [is_active, id]);
 
         res.json({
             message: `Venue ${is_active ? 'enabled' : 'disabled'} successfully`
@@ -102,23 +102,24 @@ exports.deleteVenue = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const [activeBookings] = await db.execute(
+        const { rows: activeBookings } = await db.query(
             `SELECT COUNT(*) as count FROM bookings
-             WHERE venue_id = ? AND status = 'confirmed'
-             AND (booking_date > CURDATE() OR (booking_date = CURDATE() AND end_time > CURTIME()))`,
+             WHERE venue_id = $1 AND status = 'confirmed'
+             AND (booking_date > CURRENT_DATE OR (booking_date = CURRENT_DATE AND end_time > CURRENT_TIME))`,
             [id]
         );
 
-        if (activeBookings[0].count > 0) {
+        if (Number(activeBookings[0].count) > 0) {
             return res.status(400).json({
                 message: 'Cannot delete venue with upcoming confirmed bookings. Disable it instead.'
             });
         }
 
-        await db.execute('DELETE FROM venues WHERE id = ?', [id]);
+        await db.query('DELETE FROM venues WHERE id = $1', [id]);
         res.json({ message: 'Venue deleted successfully' });
     } catch (error) {
         console.error('Delete venue error:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
+

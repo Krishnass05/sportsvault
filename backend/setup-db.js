@@ -1,107 +1,96 @@
-const mysql = require('mysql2/promise');
+const { Pool } = require('pg');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
+const pool = new Pool({
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 5432,
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'postgres',
+    ssl: process.env.DB_SSL === 'true'
+        ? { rejectUnauthorized: false }
+        : false
+});
+
 const setupDatabase = async () => {
+    const client = await pool.connect();
     try {
-        const dbName = process.env.DB_NAME || 'sportsvault';
-        
-        // Connect without database first to create it
-        let connection = await mysql.createConnection({
-            host: process.env.DB_HOST || 'localhost',
-            user: process.env.DB_USER || 'root',
-            password: process.env.DB_PASSWORD || ''
-        });
+        console.log('Connected to PostgreSQL server');
 
-        console.log('Connected to MySQL server');
-
-        // Create database
-        await connection.query(`CREATE DATABASE IF NOT EXISTS ${dbName}`);
-        console.log(`Database "${dbName}" created or already exists`);
-
-        // Close and reconnect with database
-        await connection.end();
-        
-        connection = await mysql.createConnection({
-            host: process.env.DB_HOST || 'localhost',
-            user: process.env.DB_USER || 'root',
-            password: process.env.DB_PASSWORD || '',
-            database: dbName
-        });
-        console.log(`Connected to database "${dbName}"`);
-
-        // Create tables one by one
+        // Create tables
         const tables = [
             `CREATE TABLE IF NOT EXISTS student_ids (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id BIGSERIAL PRIMARY KEY,
                 student_id VARCHAR(50) UNIQUE NOT NULL,
                 name VARCHAR(100),
                 school VARCHAR(100),
                 is_registered BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMPTZ DEFAULT NOW()
             )`,
             `CREATE TABLE IF NOT EXISTS users (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id BIGSERIAL PRIMARY KEY,
                 name VARCHAR(100) NOT NULL,
                 email VARCHAR(100) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
-                role ENUM('admin', 'student') DEFAULT 'student',
+                role VARCHAR(20) DEFAULT 'student' CHECK (role IN ('admin', 'student')),
                 student_id VARCHAR(50) UNIQUE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMPTZ DEFAULT NOW(),
                 FOREIGN KEY (student_id) REFERENCES student_ids(student_id) ON DELETE SET NULL
             )`,
             `CREATE TABLE IF NOT EXISTS equipment (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id BIGSERIAL PRIMARY KEY,
                 name VARCHAR(100) NOT NULL,
                 category VARCHAR(50) NOT NULL,
                 description TEXT,
                 total_quantity INT NOT NULL DEFAULT 0,
                 available_quantity INT NOT NULL DEFAULT 0,
-                status ENUM('available', 'issued', 'maintenance', 'damaged') DEFAULT 'available',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                status VARCHAR(20) DEFAULT 'available' CHECK (status IN ('available', 'issued', 'maintenance', 'damaged')),
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                updated_at TIMESTAMPTZ DEFAULT NOW()
             )`,
             `CREATE TABLE IF NOT EXISTS equipment_issues (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                equipment_id INT NOT NULL,
-                user_id INT NOT NULL,
-                issue_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                return_date TIMESTAMP NULL,
-                status ENUM('issued', 'returned') DEFAULT 'issued',
+                id BIGSERIAL PRIMARY KEY,
+                equipment_id BIGINT NOT NULL,
+                user_id BIGINT NOT NULL,
+                issue_date TIMESTAMPTZ DEFAULT NOW(),
+                return_date TIMESTAMPTZ,
+                status VARCHAR(20) DEFAULT 'issued' CHECK (status IN ('issued', 'returned')),
                 FOREIGN KEY (equipment_id) REFERENCES equipment(id) ON DELETE CASCADE,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )`,
             `CREATE TABLE IF NOT EXISTS venues (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id BIGSERIAL PRIMARY KEY,
                 name VARCHAR(100) NOT NULL,
                 location VARCHAR(200),
                 capacity INT,
                 description TEXT,
                 is_active BOOLEAN DEFAULT TRUE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMPTZ DEFAULT NOW()
             )`,
             `CREATE TABLE IF NOT EXISTS bookings (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                venue_id INT NOT NULL,
-                user_id INT NOT NULL,
+                id BIGSERIAL PRIMARY KEY,
+                venue_id BIGINT NOT NULL,
+                user_id BIGINT NOT NULL,
                 booking_date DATE NOT NULL,
                 start_time TIME NOT NULL,
                 end_time TIME NOT NULL,
                 purpose VARCHAR(200),
                 approx_students INT,
-                status ENUM('confirmed', 'cancelled', 'pending', 'approved', 'rejected') DEFAULT 'confirmed',
-                booking_type ENUM('student', 'admin', 'event') DEFAULT 'student',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                status VARCHAR(20) DEFAULT 'confirmed' CHECK (status IN ('confirmed', 'cancelled', 'pending', 'approved', 'rejected')),
+                booking_type VARCHAR(20) DEFAULT 'student' CHECK (booking_type IN ('student', 'admin', 'event')),
+                created_at TIMESTAMPTZ DEFAULT NOW(),
                 FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )`,
             `CREATE TABLE IF NOT EXISTS maintenance (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                equipment_id INT NOT NULL,
+                id BIGSERIAL PRIMARY KEY,
+                equipment_id BIGINT NOT NULL,
                 issue_description TEXT NOT NULL,
-                reported_by INT NOT NULL,
-                status ENUM('reported', 'in_progress', 'completed', 'cancelled') DEFAULT 'reported',
-                reported_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                completed_date TIMESTAMP NULL,
+                reported_by BIGINT NOT NULL,
+                status VARCHAR(20) DEFAULT 'reported' CHECK (status IN ('reported', 'in_progress', 'completed', 'cancelled')),
+                reported_date TIMESTAMPTZ DEFAULT NOW(),
+                completed_date TIMESTAMPTZ,
                 repair_cost DECIMAL(10, 2),
                 notes TEXT,
                 FOREIGN KEY (equipment_id) REFERENCES equipment(id) ON DELETE CASCADE,
@@ -110,35 +99,14 @@ const setupDatabase = async () => {
         ];
 
         for (const tableSQL of tables) {
-            await connection.query(tableSQL);
+            await client.query(tableSQL);
         }
         console.log('All tables created successfully');
 
-        // Run migrations for existing databases
-        const migrations = [
-            'ALTER TABLE student_ids ADD COLUMN name VARCHAR(100)',
-            'ALTER TABLE student_ids ADD COLUMN school VARCHAR(100)',
-            'ALTER TABLE venues ADD COLUMN is_active BOOLEAN DEFAULT TRUE',
-            'ALTER TABLE bookings ADD COLUMN approx_students INT',
-            "ALTER TABLE bookings ADD COLUMN booking_type ENUM('student', 'admin', 'event') DEFAULT 'student'",
-            "ALTER TABLE bookings MODIFY status ENUM('confirmed', 'cancelled', 'pending', 'approved', 'rejected') DEFAULT 'confirmed'",
-            "UPDATE bookings SET status = 'confirmed' WHERE status IN ('pending', 'approved')",
-            "UPDATE bookings SET status = 'cancelled' WHERE status = 'rejected'"
-        ];
-
-        for (const sql of migrations) {
-            try {
-                await connection.query(sql);
-            } catch (err) {
-                // Column may already exist
-            }
-        }
-        console.log('Schema migrations applied');
-
         // Insert sample venues
-        const [venueRows] = await connection.execute('SELECT COUNT(*) as count FROM venues');
-        if (venueRows[0].count === 0) {
-            await connection.execute(`
+        const { rows: venueRows } = await client.query('SELECT COUNT(*) as count FROM venues');
+        if (Number(venueRows[0].count) === 0) {
+            await client.query(`
                 INSERT INTO venues (name, location, capacity, description) VALUES
                 ('Main Cricket Ground', 'Sports Complex A', 500, 'Full-size cricket ground with pavilion'),
                 ('Football Field 1', 'Sports Complex A', 200, 'Standard size football field with floodlights'),
@@ -151,9 +119,9 @@ const setupDatabase = async () => {
         }
 
         // Insert sample equipment
-        const [equipmentRows] = await connection.execute('SELECT COUNT(*) as count FROM equipment');
-        if (equipmentRows[0].count === 0) {
-            await connection.execute(`
+        const { rows: equipmentRows } = await client.query('SELECT COUNT(*) as count FROM equipment');
+        if (Number(equipmentRows[0].count) === 0) {
+            await client.query(`
                 INSERT INTO equipment (name, category, description, total_quantity, available_quantity, status) VALUES
                 ('Cricket Bat', 'Cricket', 'English willow cricket bat', 20, 20, 'available'),
                 ('Cricket Ball', 'Cricket', 'Leather cricket ball', 50, 50, 'available'),
@@ -170,12 +138,11 @@ const setupDatabase = async () => {
         }
 
         // Check if admin exists
-        const [adminRows] = await connection.execute('SELECT COUNT(*) as count FROM users WHERE role = ?', ['admin']);
-        if (adminRows[0].count === 0) {
-            const bcrypt = require('bcryptjs');
+        const { rows: adminRows } = await client.query('SELECT COUNT(*) as count FROM users WHERE role = $1', ['admin']);
+        if (Number(adminRows[0].count) === 0) {
             const hashedPassword = await bcrypt.hash('admin123', 10);
-            await connection.execute(
-                'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
+            await client.query(
+                'INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)',
                 ['System Admin', 'admin@sportvault.com', hashedPassword, 'admin']
             );
             console.log('Default admin user created');
@@ -186,34 +153,33 @@ const setupDatabase = async () => {
         const DUMMY_EMAIL = 'student@sportvault.com';
 
         // Ensure dummy SAP ID exists in student_ids (marked as registered)
-        const [studentIdRows] = await connection.execute(
-            'SELECT COUNT(*) as count FROM student_ids WHERE student_id = ?',
+        const { rows: studentIdRows } = await client.query(
+            'SELECT COUNT(*) as count FROM student_ids WHERE student_id = $1',
             [DUMMY_SAP_ID]
         );
-        if (studentIdRows[0].count === 0) {
-            await connection.execute(
-                'INSERT INTO student_ids (student_id, name, school, is_registered) VALUES (?, ?, ?, TRUE)',
+        if (Number(studentIdRows[0].count) === 0) {
+            await client.query(
+                'INSERT INTO student_ids (student_id, name, school, is_registered) VALUES ($1, $2, $3, TRUE)',
                 [DUMMY_SAP_ID, 'Test Student', 'School of Testing']
             );
             console.log('Dummy student SAP ID created (DUMMY001)');
         } else {
             // Ensure it is marked as registered with name/school populated
-            await connection.execute(
-                'UPDATE student_ids SET is_registered = TRUE, name = ?, school = ? WHERE student_id = ?',
+            await client.query(
+                'UPDATE student_ids SET is_registered = TRUE, name = $1, school = $2 WHERE student_id = $3',
                 ['Test Student', 'School of Testing', DUMMY_SAP_ID]
             );
         }
 
         // Create dummy student user account (if not exists)
-        const [dummyUserRows] = await connection.execute(
-            'SELECT COUNT(*) as count FROM users WHERE email = ?',
+        const { rows: dummyUserRows } = await client.query(
+            'SELECT COUNT(*) as count FROM users WHERE email = $1',
             [DUMMY_EMAIL]
         );
-        if (dummyUserRows[0].count === 0) {
-            const bcrypt = require('bcryptjs');
+        if (Number(dummyUserRows[0].count) === 0) {
             const hashedPassword = await bcrypt.hash('student123', 10);
-            await connection.execute(
-                'INSERT INTO users (name, email, password, role, student_id) VALUES (?, ?, ?, ?, ?)',
+            await client.query(
+                'INSERT INTO users (name, email, password, role, student_id) VALUES ($1, $2, $3, $4, $5)',
                 ['Test Student', DUMMY_EMAIL, hashedPassword, 'student', DUMMY_SAP_ID]
             );
             console.log('Dummy student user created');
@@ -226,12 +192,14 @@ const setupDatabase = async () => {
         console.log('Dummy Student: student@sportvault.com / student123');
         console.log('=================================');
 
-        await connection.end();
         process.exit(0);
     } catch (error) {
         console.error('Database setup failed:', error.message);
         process.exit(1);
+    } finally {
+        client.release();
     }
 };
 
 setupDatabase();
+

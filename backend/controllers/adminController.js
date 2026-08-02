@@ -37,8 +37,8 @@ exports.importStudentsBulk = async (req, res) => {
                 continue;
             }
 
-            const [existing] = await db.execute(
-                'SELECT * FROM student_ids WHERE student_id = ?',
+            const { rows: existing } = await db.query(
+                'SELECT * FROM student_ids WHERE student_id = $1',
                 [sapId]
             );
 
@@ -48,8 +48,8 @@ exports.importStudentsBulk = async (req, res) => {
             }
 
             // Name and school are populated later during student registration
-            await db.execute(
-                'INSERT INTO student_ids (student_id, name, school) VALUES (?, NULL, NULL)',
+            await db.query(
+                'INSERT INTO student_ids (student_id, name, school) VALUES ($1, NULL, NULL)',
                 [sapId]
             );
             imported++;
@@ -76,8 +76,8 @@ exports.createStudentId = async (req, res) => {
             return res.status(400).json({ message: 'SAP ID is required' });
         }
 
-        const [existingRows] = await db.execute(
-            'SELECT * FROM student_ids WHERE student_id = ?',
+        const { rows: existingRows } = await db.query(
+            'SELECT * FROM student_ids WHERE student_id = $1',
             [student_id]
         );
 
@@ -85,14 +85,14 @@ exports.createStudentId = async (req, res) => {
             return res.status(400).json({ message: 'SAP ID already exists' });
         }
 
-        const [result] = await db.execute(
-            'INSERT INTO student_ids (student_id, name, school) VALUES (?, ?, ?)',
+        const result = await db.query(
+            'INSERT INTO student_ids (student_id, name, school) VALUES ($1, $2, $3) RETURNING id',
             [student_id, name || '', school || '']
         );
 
         res.status(201).json({
             message: 'Student ID created successfully',
-            id: result.insertId,
+            id: result.rows[0].id,
             student_id
         });
     } catch (error) {
@@ -104,7 +104,7 @@ exports.createStudentId = async (req, res) => {
 // Get all student IDs
 exports.getStudentIds = async (req, res) => {
     try {
-        const [rows] = await db.execute(
+        const { rows } = await db.query(
             'SELECT si.*, u.name as registered_name, u.email FROM student_ids si LEFT JOIN users u ON si.student_id = u.student_id ORDER BY si.created_at DESC'
         );
 
@@ -121,8 +121,8 @@ exports.deleteStudentId = async (req, res) => {
         const { id } = req.params;
 
         // Check if student ID is registered
-        const [rows] = await db.execute(
-            'SELECT * FROM student_ids WHERE id = ?',
+        const { rows } = await db.query(
+            'SELECT * FROM student_ids WHERE id = $1',
             [id]
         );
 
@@ -134,7 +134,7 @@ exports.deleteStudentId = async (req, res) => {
             return res.status(400).json({ message: 'Cannot delete registered Student ID' });
         }
 
-        await db.execute('DELETE FROM student_ids WHERE id = ?', [id]);
+        await db.query('DELETE FROM student_ids WHERE id = $1', [id]);
 
         res.json({ message: 'Student ID deleted successfully' });
     } catch (error) {
@@ -147,31 +147,31 @@ exports.deleteStudentId = async (req, res) => {
 exports.getDashboardStats = async (req, res) => {
     try {
         // Total bookings count
-        const [bookingRows] = await db.execute(
+        const { rows: bookingRows } = await db.query(
             'SELECT COUNT(*) as total FROM bookings'
         );
 
         // Confirmed bookings count
-        const [confirmedRows] = await db.execute(
+        const { rows: confirmedRows } = await db.query(
             "SELECT COUNT(*) as total FROM bookings WHERE status = 'confirmed'"
         );
 
         // Total students
-        const [studentRows] = await db.execute(
-            'SELECT COUNT(*) as total FROM users WHERE role = ?',
+        const { rows: studentRows } = await db.query(
+            'SELECT COUNT(*) as total FROM users WHERE role = $1',
             ['student']
         );
 
         // Total active venues
-        const [venueRows] = await db.execute(
+        const { rows: venueRows } = await db.query(
             'SELECT COUNT(*) as total FROM venues WHERE is_active = TRUE'
         );
 
         res.json({
-            totalBookings: bookingRows[0].total,
-            confirmedBookings: confirmedRows[0].total,
-            totalStudents: studentRows[0].total,
-            activeVenues: venueRows[0].total
+            totalBookings: Number(bookingRows[0].total),
+            confirmedBookings: Number(confirmedRows[0].total),
+            totalStudents: Number(studentRows[0].total),
+            activeVenues: Number(venueRows[0].total)
         });
     } catch (error) {
         console.error('Get dashboard stats error:', error);
@@ -185,8 +185,8 @@ exports.createAdmin = async (req, res) => {
         const { name, email, password } = req.body;
 
         // Check if admin already exists
-        const [existingRows] = await db.execute(
-            'SELECT * FROM users WHERE email = ?',
+        const { rows: existingRows } = await db.query(
+            'SELECT * FROM users WHERE email = $1',
             [email]
         );
 
@@ -196,14 +196,14 @@ exports.createAdmin = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const [result] = await db.execute(
-            'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
+        const result = await db.query(
+            'INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id',
             [name, email, hashedPassword, 'admin']
         );
 
         res.status(201).json({
             message: 'Admin created successfully',
-            userId: result.insertId
+            userId: result.rows[0].id
         });
     } catch (error) {
         console.error('Create admin error:', error);
@@ -214,7 +214,7 @@ exports.createAdmin = async (req, res) => {
 // Get all users
 exports.getAllUsers = async (req, res) => {
     try {
-        const [rows] = await db.execute(
+        const { rows } = await db.query(
             'SELECT id, name, email, role, student_id, created_at FROM users ORDER BY name'
         );
         res.json({ users: rows });
@@ -223,3 +223,4 @@ exports.getAllUsers = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+

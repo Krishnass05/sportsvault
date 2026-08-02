@@ -72,11 +72,14 @@ DB_PORT=5432                          # or 6543 for transaction pooler
 DB_USER=postgres
 DB_PASSWORD=<your-database-password>
 DB_NAME=postgres                      # Supabase default database
+DB_SSL=true                           # REQUIRED for Supabase (enables TLS)
 
 # Optional - Supabase Auth (if using Supabase's built-in auth)
 SUPABASE_URL=https://<your-project-ref>.supabase.co
 SUPABASE_ANON_KEY=<your-anon-public-key>
 ```
+
+> ⚠️ **Important**: Set `DB_SSL=true` or the backend will fail to connect to Supabase with an SSL error.
 
 ---
 

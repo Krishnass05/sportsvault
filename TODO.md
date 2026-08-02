@@ -1,26 +1,36 @@
-# TODO - Implementation Steps
+# SportVault - Supabase (PostgreSQL) Migration TODO
 
-## Admin Cancel Any Booking + Credits Footer
+## Progress: Backend Migration Complete ✅
 
-### Task 1: Admin can cancel any booking
-- [x] Backend already supports admin cancel via `PUT /api/bookings/:id/cancel` (bookingController.js)
-- [x] Update `frontend/js/booking.js` - show Cancel for any confirmed booking in admin view
-- [x] Update `frontend/js/dashboard.js` - show Cancel Booking for any confirmed booking in admin dashboard
-- [x] Add cancel action to reports table in `frontend/js/dashboard.js` (report bookings tbody)
-- [x] Add `cancelReportBooking()` in `frontend/js/reports.js` and expose globally
-- [x] Add "Action" column to report tables in `dashboard.html` and `reports.html`
-- [x] Update empty-state colspan in report tables (8 -> 9)
+### ✅ Completed
+- [x] Created Supabase PostgreSQL schema (`database/supabase_schema.sql`)
+- [x] Created Supabase integration guide (`database/SUPABASE_SETUP.md`)
+- [x] Pushed to GitHub
 
-### Task 2: Credits section on every page
-- [x] Add `.credits` footer styling to `frontend/css/styles.css`
-- [x] Add credits footer to `login.html`
-- [x] Add credits footer to `register.html`
-- [x] Add credits footer to `dashboard.html`
-- [x] Add credits footer to `booking.html`
-- [x] Add credits footer to `reports.html`
-- [x] Add credits footer to `equipment.html`
-- [x] Add credits footer to `maintenance.html`
+### ✅ Completed: Backend Migration (MySQL → PostgreSQL)
 
-### Task 3: Test
-- [ ] All tasks completed. Restart server and verify all changes work.
+- [x] Update `backend/package.json` - swap `mysql2` for `pg`
+- [x] Rewrite `backend/db.js` - use `pg` Pool with SSL
+- [x] Rewrite `backend/setup-db.js` - PostgreSQL seed script
+- [x] Migrate `backend/controllers/authController.js`
+- [x] Migrate `backend/controllers/adminController.js`
+- [x] Migrate `backend/controllers/bookingController.js`
+- [x] Migrate `backend/controllers/equipmentController.js`
+- [x] Migrate `backend/controllers/maintenanceController.js`
+- [x] Migrate `backend/controllers/venueController.js`
+- [x] Install `pg` dependency, remove `mysql2`
+- [x] Syntax check all backend files
+- [x] Update `database/SUPABASE_SETUP.md` with `DB_SSL=true`
+- [ ] Test server startup with Supabase credentials
+- [ ] Push to GitHub
+
+### 📝 Key Syntax Conversions Applied
+- `?` placeholders → `$1, $2, ...`
+- `const [rows] = await db.execute(q, p)` → `const { rows } = await db.query(q, p)`
+- `result.insertId` → `result.rows[0].id` (with `RETURNING id`)
+- `COUNT(*)` returns string in pg → wrap with `Number()`
+- `DATE_FORMAT(col, '%Y-%m')` → `TO_CHAR(col, 'YYYY-MM')`
+- `CURDATE()` → `CURRENT_DATE`, `CURTIME()` → `CURRENT_TIME`
+- `DATE_SUB(NOW(), INTERVAL 30 DAY)` → `NOW() - INTERVAL '30 days'`
+- `db.getConnection()` + `beginTransaction()` → `pg Client` + `BEGIN/COMMIT/ROLLBACK`
 

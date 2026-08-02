@@ -1,4 +1,3 @@
-
 const db = require('../db');
 const {
     validateBookingTimes,
@@ -12,7 +11,7 @@ const {
 const emailService = require('../services/emailService');
 
 async function checkVenueAvailable(venueId, isStudent = false) {
-    const [rows] = await db.execute('SELECT * FROM venues WHERE id = ?', [venueId]);
+    const { rows } = await db.query('SELECT * FROM venues WHERE id = $1', [venueId]);
     if (rows.length === 0) return { found: false };
     if (isStudent && !rows[0].is_active) return { found: true, active: false, venue: rows[0] };
     return { found: true, active: true, venue: rows[0] };
@@ -21,17 +20,17 @@ async function checkVenueAvailable(venueId, isStudent = false) {
 async function findConflictingBookings(venueId, bookingDate, startTime, endTime, excludeId = null) {
     let query = `
         SELECT * FROM bookings
-        WHERE venue_id = ? AND booking_date = ? AND status = 'confirmed'
-        AND start_time < ? AND end_time > ?
+        WHERE venue_id = $1 AND booking_date = $2 AND status = 'confirmed'
+        AND start_time < $3 AND end_time > $4
     `;
     const params = [venueId, bookingDate, endTime, startTime];
 
     if (excludeId) {
-        query += ' AND id != ?';
+        query += ' AND id != $5';
         params.push(excludeId);
     }
 
-    const [rows] = await db.execute(query, params);
+    const { rows } = await db.query(query, params);
     return rows;
 }
 
@@ -48,21 +47,21 @@ exports.getAllBookings = async (req, res) => {
         const params = [];
 
         if (req.user.role === 'student') {
-            query += ' AND b.user_id = ?';
+            query += ' AND b.user_id = $1';
             params.push(req.user.id);
         } else if (req.user.role === 'admin' && req.query.user_id) {
-            query += ' AND b.user_id = ?';
+            query += ' AND b.user_id = $1';
             params.push(req.query.user_id);
         }
 
         if (month && /^\d{4}-\d{2}$/.test(month)) {
-            query += ' AND DATE_FORMAT(b.booking_date, "%Y-%m") = ?';
+            query += ` AND TO_CHAR(b.booking_date, 'YYYY-MM') = $${params.length + 1}`;
             params.push(month);
         }
 
         query += ' ORDER BY b.booking_date DESC, b.start_time DESC';
 
-        const [rows] = await db.execute(query, params);
+        const { rows } = await db.query(query, params);
         res.json({ bookings: rows });
     } catch (error) {
         console.error('Get bookings error:', error);
@@ -115,23 +114,23 @@ exports.createBooking = async (req, res) => {
         const validTypes = ['student', 'admin', 'event'];
         const finalType = validTypes.includes(bookingType) ? bookingType : (isAdmin ? 'admin' : 'student');
 
-        const [result] = await db.execute(
+        const result = await db.query(
             `INSERT INTO bookings (venue_id, user_id, booking_date, start_time, end_time, purpose, approx_students, status, booking_type)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'confirmed', ?)`,
+             VALUES ($1, $2, $3, $4, $5, $6, $7, 'confirmed', $8) RETURNING id`,
             [venue_id, userId, booking_date, timeValidation.startTime, timeValidation.endTime, purpose || '', approx_students ? parseInt(approx_students) || null : null, finalType]
         );
 
         // --- Send email notification to the student (or the booking user) ---
         try {
             // Fetch the recipient user (the user the booking belongs to)
-            const [userRows] = await db.execute(
-                'SELECT id, name, email FROM users WHERE id = ?',
+            const { rows: userRows } = await db.query(
+                'SELECT id, name, email FROM users WHERE id = $1',
                 [userId]
             );
 
             // Fetch the venue name for the email
-            const [venueRows] = await db.execute(
-                'SELECT name FROM venues WHERE id = ?',
+            const { rows: venueRows } = await db.query(
+                'SELECT name FROM venues WHERE id = $1',
                 [venue_id]
             );
 
@@ -159,7 +158,7 @@ exports.createBooking = async (req, res) => {
 
         res.status(201).json({
             message: 'Booking confirmed successfully',
-            bookingId: result.insertId,
+            bookingId: result.rows[0].id,
             status: 'confirmed'
         });
     } catch (error) {
@@ -173,7 +172,7 @@ exports.cancelBooking = async (req, res) => {
         const { id } = req.params;
         const userId = req.user.id;
 
-        const [rows] = await db.execute('SELECT * FROM bookings WHERE id = ?', [id]);
+        const { rows } = await db.query('SELECT * FROM bookings WHERE id = $1', [id]);
         if (rows.length === 0) {
             return res.status(404).json({ message: 'Booking not found' });
         }
@@ -188,19 +187,19 @@ exports.cancelBooking = async (req, res) => {
             return res.status(403).json({ message: 'Access denied' });
         }
 
-        await db.execute('UPDATE bookings SET status = ? WHERE id = ?', ['cancelled', id]);
+        await db.query('UPDATE bookings SET status = $1 WHERE id = $2', ['cancelled', id]);
 
         // --- Send email notification about the cancellation ---
         try {
             // Fetch the booking user's info
-            const [userRows] = await db.execute(
-                'SELECT id, name, email FROM users WHERE id = ?',
+            const { rows: userRows } = await db.query(
+                'SELECT id, name, email FROM users WHERE id = $1',
                 [booking.user_id]
             );
 
             // Fetch the venue name
-            const [venueRows] = await db.execute(
-                'SELECT name FROM venues WHERE id = ?',
+            const { rows: venueRows } = await db.query(
+                'SELECT name FROM venues WHERE id = $1',
                 [booking.venue_id]
             );
 
@@ -252,9 +251,9 @@ exports.getAvailableSlots = async (req, res) => {
             });
         }
 
-        const [bookings] = await db.execute(
+        const { rows: bookings } = await db.query(
             `SELECT start_time, end_time, booking_type, purpose FROM bookings
-             WHERE venue_id = ? AND booking_date = ? AND status = 'confirmed'`,
+             WHERE venue_id = $1 AND booking_date = $2 AND status = 'confirmed'`,
             [venue_id, date]
         );
 
@@ -305,12 +304,12 @@ exports.getBookingReports = async (req, res) => {
             return res.status(400).json({ message: 'Valid month parameter required (YYYY-MM)' });
         }
 
-        const [bookings] = await db.execute(
+        const { rows: bookings } = await db.query(
             `SELECT b.*, v.name as venue_name, v.location, u.name as user_name, u.email as user_email
              FROM bookings b
              JOIN venues v ON b.venue_id = v.id
              JOIN users u ON b.user_id = u.id
-             WHERE DATE_FORMAT(b.booking_date, '%Y-%m') = ?
+             WHERE TO_CHAR(b.booking_date, 'YYYY-MM') = $1
              ORDER BY b.booking_date, b.start_time`,
             [month]
         );
@@ -347,12 +346,13 @@ exports.getBookingReports = async (req, res) => {
 exports.getVenues = async (req, res) => {
     try {
         let query = 'SELECT * FROM venues';
+        const params = [];
         if (req.user.role === 'student') {
             query += ' WHERE is_active = TRUE';
         }
         query += ' ORDER BY name';
 
-        const [rows] = await db.execute(query);
+        const { rows } = await db.query(query, params);
         res.json({ venues: rows });
     } catch (error) {
         console.error('Get venues error:', error);
@@ -364,12 +364,12 @@ exports.importBooking = async (req, res) => {
     try {
         const { user_name, venue_name, booking_date, start_time, end_time, purpose, booking_type, approx_students } = req.body;
 
-        const [userRows] = await db.execute('SELECT id FROM users WHERE name = ?', [user_name]);
+        const { rows: userRows } = await db.query('SELECT id FROM users WHERE name = $1', [user_name]);
         if (userRows.length === 0) {
             return res.status(400).json({ message: `User "${user_name}" not found` });
         }
 
-        const [venueRows] = await db.execute('SELECT id FROM venues WHERE name = ?', [venue_name]);
+        const { rows: venueRows } = await db.query('SELECT id FROM venues WHERE name = $1', [venue_name]);
         if (venueRows.length === 0) {
             return res.status(400).json({ message: `Venue "${venue_name}" not found` });
         }
@@ -390,9 +390,9 @@ exports.importBooking = async (req, res) => {
             return res.status(409).json({ message: 'Conflicting booking exists for this slot' });
         }
 
-        await db.execute(
+        await db.query(
             `INSERT INTO bookings (venue_id, user_id, booking_date, start_time, end_time, purpose, approx_students, status, booking_type)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'confirmed', ?)`,
+             VALUES ($1, $2, $3, $4, $5, $6, $7, 'confirmed', $8)`,
             [venueRows[0].id, userRows[0].id, booking_date, timeValidation.startTime, timeValidation.endTime, purpose || '', approx_students ? parseInt(approx_students) || null : null, booking_type || 'admin']
         );
 
@@ -402,3 +402,4 @@ exports.importBooking = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+

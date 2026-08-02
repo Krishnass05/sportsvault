@@ -14,8 +14,8 @@ exports.register = async (req, res) => {
         }
 
         // Check if student_id exists in student_ids table
-        const [studentIdRows] = await db.execute(
-            'SELECT * FROM student_ids WHERE student_id = ?',
+        const { rows: studentIdRows } = await db.query(
+            'SELECT * FROM student_ids WHERE student_id = $1',
             [student_id]
         );
 
@@ -29,8 +29,8 @@ exports.register = async (req, res) => {
         }
 
         // Check if email already exists
-        const [emailRows] = await db.execute(
-            'SELECT * FROM users WHERE email = ?',
+        const { rows: emailRows } = await db.query(
+            'SELECT * FROM users WHERE email = $1',
             [email]
         );
 
@@ -42,15 +42,15 @@ exports.register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create user
-        const [result] = await db.execute(
-            'INSERT INTO users (name, email, password, role, student_id) VALUES (?, ?, ?, ?, ?)',
+        const result = await db.query(
+            'INSERT INTO users (name, email, password, role, student_id) VALUES ($1, $2, $3, $4, $5) RETURNING id',
             [name, email, hashedPassword, 'student', student_id]
         );
 
         // Mark student_id as registered and store the name and school
         // provided by the student during registration
-        await db.execute(
-            'UPDATE student_ids SET is_registered = TRUE, name = ?, school = ? WHERE student_id = ?',
+        await db.query(
+            'UPDATE student_ids SET is_registered = TRUE, name = $1, school = $2 WHERE student_id = $3',
             [name, school || '', student_id]
         );
 
@@ -64,7 +64,7 @@ exports.register = async (req, res) => {
 
         res.status(201).json({
             message: 'Registration successful',
-            userId: result.insertId
+            userId: result.rows[0].id
         });
     } catch (error) {
         console.error('Registration error:', error);
@@ -83,8 +83,8 @@ exports.login = async (req, res) => {
         }
 
         // Find user by email
-        const [rows] = await db.execute(
-            'SELECT * FROM users WHERE email = ?',
+        const { rows } = await db.query(
+            'SELECT * FROM users WHERE email = $1',
             [email]
         );
 
@@ -103,11 +103,11 @@ exports.login = async (req, res) => {
 
         // Generate JWT token
         const token = jwt.sign(
-            { 
-                id: user.id, 
-                email: user.email, 
+            {
+                id: user.id,
+                email: user.email,
                 role: user.role,
-                name: user.name 
+                name: user.name
             },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
@@ -133,8 +133,8 @@ exports.login = async (req, res) => {
 // Get current user profile
 exports.getProfile = async (req, res) => {
     try {
-        const [rows] = await db.execute(
-            'SELECT id, name, email, role, student_id, created_at FROM users WHERE id = ?',
+        const { rows } = await db.query(
+            'SELECT id, name, email, role, student_id, created_at FROM users WHERE id = $1',
             [req.user.id]
         );
 
@@ -148,3 +148,4 @@ exports.getProfile = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+

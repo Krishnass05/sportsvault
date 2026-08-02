@@ -3,7 +3,7 @@ const db = require('../db');
 // Get all equipment
 exports.getAllEquipment = async (req, res) => {
     try {
-        const [rows] = await db.execute(
+        const { rows } = await db.query(
             'SELECT * FROM equipment ORDER BY category, name'
         );
 
@@ -19,8 +19,8 @@ exports.getEquipmentById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const [rows] = await db.execute(
-            'SELECT * FROM equipment WHERE id = ?',
+        const { rows } = await db.query(
+            'SELECT * FROM equipment WHERE id = $1',
             [id]
         );
 
@@ -44,14 +44,14 @@ exports.createEquipment = async (req, res) => {
             return res.status(400).json({ message: 'Name, category, and quantity are required' });
         }
 
-        const [result] = await db.execute(
-            'INSERT INTO equipment (name, category, description, total_quantity, available_quantity) VALUES (?, ?, ?, ?, ?)',
+        const result = await db.query(
+            'INSERT INTO equipment (name, category, description, total_quantity, available_quantity) VALUES ($1, $2, $3, $4, $5) RETURNING id',
             [name, category, description || '', total_quantity, total_quantity]
         );
 
         res.status(201).json({
             message: 'Equipment added successfully',
-            equipmentId: result.insertId
+            equipmentId: result.rows[0].id
         });
     } catch (error) {
         console.error('Create equipment error:', error);
@@ -66,8 +66,8 @@ exports.updateEquipment = async (req, res) => {
         const { name, category, description, total_quantity, status } = req.body;
 
         // Get current equipment data
-        const [rows] = await db.execute(
-            'SELECT * FROM equipment WHERE id = ?',
+        const { rows } = await db.query(
+            'SELECT * FROM equipment WHERE id = $1',
             [id]
         );
 
@@ -84,8 +84,8 @@ exports.updateEquipment = async (req, res) => {
             available_quantity = Math.max(0, total_quantity - issued);
         }
 
-        await db.execute(
-            'UPDATE equipment SET name = ?, category = ?, description = ?, total_quantity = ?, available_quantity = ?, status = ? WHERE id = ?',
+        await db.query(
+            'UPDATE equipment SET name = $1, category = $2, description = $3, total_quantity = $4, available_quantity = $5, status = $6 WHERE id = $7',
             [
                 name || equipment.name,
                 category || equipment.category,
@@ -110,8 +110,8 @@ exports.deleteEquipment = async (req, res) => {
         const { id } = req.params;
 
         // Check if equipment has active issues
-        const [issueRows] = await db.execute(
-            'SELECT * FROM equipment_issues WHERE equipment_id = ? AND status = ?',
+        const { rows: issueRows } = await db.query(
+            'SELECT * FROM equipment_issues WHERE equipment_id = $1 AND status = $2',
             [id, 'issued']
         );
 
@@ -119,7 +119,7 @@ exports.deleteEquipment = async (req, res) => {
             return res.status(400).json({ message: 'Cannot delete equipment with active issues' });
         }
 
-        await db.execute('DELETE FROM equipment WHERE id = ?', [id]);
+        await db.query('DELETE FROM equipment WHERE id = $1', [id]);
 
         res.json({ message: 'Equipment deleted successfully' });
     } catch (error) {
@@ -130,13 +130,14 @@ exports.deleteEquipment = async (req, res) => {
 
 // Issue equipment (Student only)
 exports.issueEquipment = async (req, res) => {
+    const client = await db.connect();
     try {
         const { id } = req.params;
         const userId = req.user.id;
 
         // Check if equipment exists and is available
-        const [rows] = await db.execute(
-            'SELECT * FROM equipment WHERE id = ?',
+        const { rows } = await client.query(
+            'SELECT * FROM equipment WHERE id = $1 FOR UPDATE',
             [id]
         );
 
@@ -151,8 +152,8 @@ exports.issueEquipment = async (req, res) => {
         }
 
         // Check how many of this specific equipment the user has already issued
-        const [existingIssue] = await db.execute(
-            'SELECT * FROM equipment_issues WHERE equipment_id = ? AND user_id = ? AND status = ?',
+        const { rows: existingIssue } = await client.query(
+            'SELECT * FROM equipment_issues WHERE equipment_id = $1 AND user_id = $2 AND status = $3',
             [id, userId, 'issued']
         );
 
@@ -161,30 +162,29 @@ exports.issueEquipment = async (req, res) => {
         }
 
         // Start transaction
-        const connection = await db.getConnection();
-        await connection.beginTransaction();
+        await client.query('BEGIN');
 
         try {
             // Create issue record
-            await connection.execute(
-                'INSERT INTO equipment_issues (equipment_id, user_id) VALUES (?, ?)',
+            await client.query(
+                'INSERT INTO equipment_issues (equipment_id, user_id) VALUES ($1, $2)',
                 [id, userId]
             );
 
             // Update equipment availability
-            await connection.execute(
-                'UPDATE equipment SET available_quantity = available_quantity - 1, status = CASE WHEN available_quantity - 1 = 0 THEN ? ELSE ? END WHERE id = ?',
+            await client.query(
+                'UPDATE equipment SET available_quantity = available_quantity - 1, status = CASE WHEN available_quantity - 1 = 0 THEN $1 ELSE $2 END WHERE id = $3',
                 ['issued', 'available', id]
             );
 
-            await connection.commit();
-            connection.release();
+            await client.query('COMMIT');
 
             res.json({ message: 'Equipment issued successfully' });
         } catch (error) {
-            await connection.rollback();
-            connection.release();
+            await client.query('ROLLBACK');
             throw error;
+        } finally {
+            client.release();
         }
     } catch (error) {
         console.error('Issue equipment error:', error);
@@ -194,13 +194,14 @@ exports.issueEquipment = async (req, res) => {
 
 // Return equipment (Student only)
 exports.returnEquipment = async (req, res) => {
+    const client = await db.connect();
     try {
         const { id } = req.params;
         const userId = req.user.id;
 
         // Check if user has issued this equipment
-        const [issueRows] = await db.execute(
-            'SELECT * FROM equipment_issues WHERE equipment_id = ? AND user_id = ? AND status = ?',
+        const { rows: issueRows } = await client.query(
+            'SELECT * FROM equipment_issues WHERE equipment_id = $1 AND user_id = $2 AND status = $3',
             [id, userId, 'issued']
         );
 
@@ -211,30 +212,29 @@ exports.returnEquipment = async (req, res) => {
         const issueId = issueRows[0].id;
 
         // Start transaction
-        const connection = await db.getConnection();
-        await connection.beginTransaction();
+        await client.query('BEGIN');
 
         try {
             // Update issue record
-            await connection.execute(
-                'UPDATE equipment_issues SET status = ?, return_date = NOW() WHERE id = ?',
+            await client.query(
+                'UPDATE equipment_issues SET status = $1, return_date = NOW() WHERE id = $2',
                 ['returned', issueId]
             );
 
             // Update equipment availability
-            await connection.execute(
-                'UPDATE equipment SET available_quantity = available_quantity + 1, status = ? WHERE id = ?',
+            await client.query(
+                'UPDATE equipment SET available_quantity = available_quantity + 1, status = $1 WHERE id = $2',
                 ['available', id]
             );
 
-            await connection.commit();
-            connection.release();
+            await client.query('COMMIT');
 
             res.json({ message: 'Equipment returned successfully' });
         } catch (error) {
-            await connection.rollback();
-            connection.release();
+            await client.query('ROLLBACK');
             throw error;
+        } finally {
+            client.release();
         }
     } catch (error) {
         console.error('Return equipment error:', error);
@@ -247,11 +247,11 @@ exports.getMyEquipment = async (req, res) => {
     try {
         const userId = req.user.id;
 
-        const [rows] = await db.execute(
+        const { rows } = await db.query(
             `SELECT ei.*, e.name, e.category, e.description 
              FROM equipment_issues ei 
              JOIN equipment e ON ei.equipment_id = e.id 
-             WHERE ei.user_id = ? AND ei.status = ?`,
+             WHERE ei.user_id = $1 AND ei.status = $2`,
             [userId, 'issued']
         );
 
@@ -266,18 +266,18 @@ exports.getMyEquipment = async (req, res) => {
 exports.getEquipmentStats = async (req, res) => {
     try {
         // Total equipment count
-        const [equipmentRows] = await db.execute(
+        const { rows: equipmentRows } = await db.query(
             'SELECT COUNT(*) as total FROM equipment'
         );
 
         // Available equipment count
-        const [availableRows] = await db.execute(
-            'SELECT SUM(available_quantity) as available FROM equipment'
+        const { rows: availableRows } = await db.query(
+            'SELECT COALESCE(SUM(available_quantity), 0) as available FROM equipment'
         );
 
         res.json({
-            totalEquipment: equipmentRows[0].total,
-            availableEquipment: availableRows[0].available || 0
+            totalEquipment: Number(equipmentRows[0].total),
+            availableEquipment: Number(availableRows[0].available)
         });
     } catch (error) {
         console.error('Get equipment stats error:', error);
@@ -289,7 +289,7 @@ exports.getEquipmentStats = async (req, res) => {
 exports.getEquipmentIssuesHistory = async (req, res) => {
     try {
         console.log('Getting equipment issues history for admin:', req.user.id);
-        const [rows] = await db.execute(
+        const { rows } = await db.query(
             `SELECT 
                 ei.id,
                 ei.issue_date,
@@ -322,8 +322,8 @@ exports.updateEquipmentIssue = async (req, res) => {
             return res.status(400).json({ message: 'Invalid status' });
         }
 
-        const [rows] = await db.execute(
-            'SELECT * FROM equipment_issues WHERE id = ?',
+        const { rows } = await db.query(
+            'SELECT * FROM equipment_issues WHERE id = $1',
             [id]
         );
 
@@ -333,8 +333,8 @@ exports.updateEquipmentIssue = async (req, res) => {
 
         const returnDate = status === 'returned' ? new Date() : null;
 
-        await db.execute(
-            'UPDATE equipment_issues SET status = ?, return_date = ? WHERE id = ?',
+        await db.query(
+            'UPDATE equipment_issues SET status = $1, return_date = $2 WHERE id = $3',
             [status, returnDate, id]
         );
 
@@ -350,7 +350,7 @@ exports.deleteEquipmentIssue = async (req, res) => {
     try {
         const { id } = req.params;
 
-        await db.execute('DELETE FROM equipment_issues WHERE id = ?', [id]);
+        await db.query('DELETE FROM equipment_issues WHERE id = $1', [id]);
         res.json({ message: 'Equipment issue deleted successfully' });
     } catch (error) {
         console.error('Delete equipment issue error:', error);
@@ -364,8 +364,8 @@ exports.importEquipmentIssue = async (req, res) => {
         const { student_name, equipment_name, category, issue_date, return_date, status } = req.body;
 
         // Find student by name
-        const [studentRows] = await db.execute(
-            'SELECT id FROM users WHERE name = ? AND role = ?',
+        const { rows: studentRows } = await db.query(
+            'SELECT id FROM users WHERE name = $1 AND role = $2',
             [student_name, 'student']
         );
 
@@ -374,8 +374,8 @@ exports.importEquipmentIssue = async (req, res) => {
         }
 
         // Find equipment by name
-        const [equipmentRows] = await db.execute(
-            'SELECT id FROM equipment WHERE name = ?',
+        const { rows: equipmentRows } = await db.query(
+            'SELECT id FROM equipment WHERE name = $1',
             [equipment_name]
         );
 
@@ -383,8 +383,8 @@ exports.importEquipmentIssue = async (req, res) => {
             return res.status(400).json({ message: `Equipment "${equipment_name}" not found` });
         }
 
-        await db.execute(
-            'INSERT INTO equipment_issues (equipment_id, user_id, issue_date, return_date, status) VALUES (?, ?, ?, ?, ?)',
+        await db.query(
+            'INSERT INTO equipment_issues (equipment_id, user_id, issue_date, return_date, status) VALUES ($1, $2, $3, $4, $5)',
             [equipmentRows[0].id, studentRows[0].id, issue_date, return_date || null, status || 'issued']
         );
 
@@ -394,3 +394,4 @@ exports.importEquipmentIssue = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
