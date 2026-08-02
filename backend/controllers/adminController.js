@@ -37,22 +37,18 @@ exports.importStudentsBulk = async (req, res) => {
                 continue;
             }
 
-            const { rows: existing } = await db.query(
-                'SELECT * FROM student_ids WHERE student_id = $1',
+            // Use ON CONFLICT DO NOTHING to gracefully skip existing SAP IDs
+            // (avoids duplicate key errors and race conditions)
+            const result = await db.query(
+                'INSERT INTO student_ids (student_id, name, school) VALUES ($1, NULL, NULL) ON CONFLICT (student_id) DO NOTHING',
                 [sapId]
             );
 
-            if (existing.length > 0) {
+            if (result.rowCount > 0) {
+                imported++;
+            } else {
                 skipped++;
-                continue;
             }
-
-            // Name and school are populated later during student registration
-            await db.query(
-                'INSERT INTO student_ids (student_id, name, school) VALUES ($1, NULL, NULL)',
-                [sapId]
-            );
-            imported++;
         }
 
         res.json({
