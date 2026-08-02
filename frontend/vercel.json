@@ -8,8 +8,7 @@
     { "source": "/equipment", "destination": "/html/equipment.html" },
     { "source": "/maintenance", "destination": "/html/maintenance.html" },
     { "source": "/reports", "destination": "/html/reports.html" },
-    { "source": "/css/*", "destination": "/css/:splat" },
-    { "source": "/js/*", "destination": "/js/:splat" },
-    { "source": "/api/*", "destination": "https://sportsvault-production.up.railway.app/api/:splat" }
+    { "source": "/api/:path*", "destination": "https://sportsvault-production.up.railway.app/api/:path*" }
   ]
 }
+
