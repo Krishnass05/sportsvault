@@ -1,9 +1,9 @@
 // SportVault Authentication Module
 
-// Use the deployed Railway backend URL in production, or localhost for development
-const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:3000/api'
-    : 'https://sportsvault-production.up.railway.app/api';
+// Use relative /api paths.
+// - Local dev: Express serves frontend + backend on localhost:3000, so /api hits the same server.
+// - Production (Vercel): vercel.json rewrites /api/* to the Railway backend.
+const API_BASE_URL = '/api';
 
 
 // Check if user is authenticated
