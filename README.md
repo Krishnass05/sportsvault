@@ -4,6 +4,14 @@ A comprehensive web-based management system for sports equipment and venue booki
 
 ---
 
+## 🌐 Live Demo
+
+🚀 **Access the live application:** [https://sportsvault-rho.vercel.app/login](https://sportsvault-rho.vercel.app/login)
+
+Explore the deployed SportVault app — register, login, and test the full equipment & venue booking system.
+
+---
+
 ## Table of Contents
 
 1. [Project Overview](#project-overview)

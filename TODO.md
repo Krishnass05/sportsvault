@@ -1,10 +1,5 @@
-# TODO - Admin & Venue Updates
+# TODO - Add Live Link to GitHub
 
-## Steps
-- [x] 1. Remove hardcoded admin credentials from frontend login page
-- [x] 2. Update backend setup-db.js: create two admin users (rakesha.dm@nmims.edu, Sports.blr@nmims.edu) with password admin123
-- [x] 3. Update database/schema.sql seed data (admin users + new venues)
-- [x] 4. Update database/supabase_schema.sql seed data (admin users + new venues)
-- [x] 5. Replace venues with new list in all seed files
-- [x] 6. Update README.md / SETUP.md admin credentials references
-- [x] 7. Push changes to git
+- [x] Add live link section to README.md
+- [ ] Stage and commit the README change
+- [ ] Push to GitHub repository
