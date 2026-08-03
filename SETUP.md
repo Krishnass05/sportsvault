@@ -248,34 +248,28 @@ http://localhost:3000
 
 ## First Time Setup
 
-### Step 1: Create Admin Account
+### Step 1: Admin Accounts
 
-Since there's no default admin, you need to create one:
+Admin accounts are created automatically during database setup:
 
-#### Option A: Using API (Recommended)
+- Email: `rakesha.dm@nmims.edu`
+- Password: `admin123`
 
-Send a POST request to create admin:
+- Email: `Sports.blr@nmims.edu`
+- Password: `admin123`
+
+#### Option A: Using API (Recommended, if needed)
+
+Send a POST request to create an additional admin:
 
 ```bash
 curl -X POST http://localhost:3000/api/admin/create-admin \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Admin User",
-    "email": "admin@sportsvault.com",
+    "email": "admin@example.com",
     "password": "admin123"
   }'
-```
-
-Or use a tool like Postman:
-- URL: `http://localhost:3000/api/admin/create-admin`
-- Method: POST
-- Body (JSON):
-```json
-{
-  "name": "Admin User",
-  "email": "admin@sportsvault.com",
-  "password": "admin123"
-}
 ```
 
 #### Option B: Direct Database Insert (Emergency only)
@@ -284,14 +278,16 @@ Or use a tool like Postman:
 -- Generate password hash first using bcrypt
 -- Then insert into database
 INSERT INTO users (name, email, password, role) 
-VALUES ('Admin', 'admin@sportsvault.com', '$2a$10$...', 'admin');
+VALUES ('Admin', 'admin@example.com', '$2a$10$...', 'admin');
 ```
 
 ### Step 2: Login as Admin
 
 1. Go to `http://localhost:3000/login`
 2. Enter admin credentials:
-   - Email: `admin@sportsvault.com`
+   - Email: `rakesha.dm@nmims.edu`
+   - Password: `admin123`
+   - Or Email: `Sports.blr@nmims.edu`
    - Password: `admin123`
 3. Click Login
 

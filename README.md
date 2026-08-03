@@ -401,7 +401,7 @@ npm start
 
 ### Step 6: Access Application
 - Open browser: http://localhost:3000
-- Default admin credentials: Create via `/api/admin/create-admin` or first registration
+- Admin accounts: `rakesha.dm@nmims.edu` / `admin123` and `Sports.blr@nmims.edu` / `admin123`
 - **Dummy student for testing:** `student@sportvault.com` / `student123` (SAP ID: `DUMMY001`)
 
 ---

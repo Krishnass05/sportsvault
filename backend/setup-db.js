@@ -104,17 +104,19 @@ const setupDatabase = async () => {
         }
         console.log('All tables created successfully');
 
-        // Insert sample venues
+// Insert sample venues
         const { rows: venueRows } = await client.query('SELECT COUNT(*) as count FROM venues');
         if (Number(venueRows[0].count) === 0) {
             await client.query(`
                 INSERT INTO venues (name, location, capacity, description) VALUES
-                ('Main Cricket Ground', 'Sports Complex A', 500, 'Full-size cricket ground with pavilion'),
-                ('Football Field 1', 'Sports Complex A', 200, 'Standard size football field with floodlights'),
-                ('Basketball Court', 'Indoor Arena', 100, 'Indoor basketball court with seating'),
-                ('Tennis Court 1', 'Tennis Complex', 50, 'Hard court tennis facility'),
-                ('Badminton Hall', 'Indoor Arena', 80, '4 badminton courts with wooden flooring'),
-                ('Volleyball Court', 'Beach Sports Area', 100, 'Beach volleyball court')
+                ('Pickleball Court 1', 'Indoor Arena', 8, 'Pickleball court with net and lines'),
+                ('Pickleball Court 2', 'Indoor Arena', 8, 'Pickleball court with net and lines'),
+                ('Cricket Turf', 'Sports Complex A', 500, 'Cricket turf ground'),
+                ('Football Turf', 'Sports Complex A', 200, 'Football turf ground'),
+                ('Basketball Court 1', 'Indoor Arena', 100, 'Indoor basketball court'),
+                ('Basketball Court 2', 'Indoor Arena', 100, 'Indoor basketball court'),
+                ('Badminton Court', 'Indoor Arena', 80, 'Badminton court with wooden flooring'),
+                ('Volleyball Court', 'Beach Sports Area', 100, 'Volleyball court')
             `);
             console.log('Sample venues inserted');
         }
@@ -138,15 +140,24 @@ const setupDatabase = async () => {
             console.log('Sample equipment inserted');
         }
 
-        // Check if admin exists
-        const { rows: adminRows } = await client.query('SELECT COUNT(*) as count FROM users WHERE role = $1', ['admin']);
-        if (Number(adminRows[0].count) === 0) {
-            const hashedPassword = await bcrypt.hash('admin123', 10);
-            await client.query(
-                'INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)',
-                ['System Admin', 'admin@sportvault.com', hashedPassword, 'admin']
+// Create admin users (if not exists)
+        const admins = [
+            { name: 'Admin Rakesh', email: 'rakesha.dm@nmims.edu' },
+            { name: 'Sports Admin', email: 'Sports.blr@nmims.edu' }
+        ];
+        for (const admin of admins) {
+            const { rows: adminRows } = await client.query(
+                'SELECT COUNT(*) as count FROM users WHERE email = $1',
+                [admin.email]
             );
-            console.log('Default admin user created');
+            if (Number(adminRows[0].count) === 0) {
+                const hashedPassword = await bcrypt.hash('admin123', 10);
+                await client.query(
+                    'INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)',
+                    [admin.name, admin.email, hashedPassword, 'admin']
+                );
+                console.log(`Admin user created: ${admin.email}`);
+            }
         }
 
         // Create dummy student for testing purposes
@@ -189,7 +200,8 @@ const setupDatabase = async () => {
         console.log('\n=================================');
         console.log('Database setup completed successfully!');
         console.log('=================================');
-        console.log('Default Admin: admin@sportvault.com / admin123');
+console.log('Admin: rakesha.dm@nmims.edu / admin123');
+        console.log('Admin: Sports.blr@nmims.edu / admin123');
         console.log('Dummy Student: student@sportvault.com / student123');
         console.log('=================================');
 

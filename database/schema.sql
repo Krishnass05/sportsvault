@@ -102,10 +102,11 @@ CREATE TABLE IF NOT EXISTS maintenance (
     FOREIGN KEY (reported_by) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Insert default admin user
+-- Insert admin users
 -- Password: admin123 (hashed with bcrypt)
 INSERT INTO users (name, email, password, role) VALUES 
-('System Admin', 'admin@sportvault.com', '$2a$10$YourHashedPasswordHere', 'admin');
+('Admin Rakesh', 'rakesha.dm@nmims.edu', '$2a$10$YourHashedPasswordHere', 'admin'),
+('Sports Admin', 'Sports.blr@nmims.edu', '$2a$10$YourHashedPasswordHere', 'admin');
 
 -- Insert dummy student SAP ID for testing purposes
 INSERT INTO student_ids (student_id, name, school, is_registered) VALUES
@@ -118,12 +119,14 @@ INSERT INTO users (name, email, password, role, student_id) VALUES
 
 -- Insert sample venues
 INSERT INTO venues (name, location, capacity, description, is_active) VALUES
-('Main Cricket Ground', 'Sports Complex A', 500, 'Full-size cricket ground with pavilion', TRUE),
-('Football Field 1', 'Sports Complex A', 200, 'Standard size football field with floodlights', TRUE),
-('Basketball Court', 'Indoor Arena', 100, 'Indoor basketball court with seating', TRUE),
-('Tennis Court 1', 'Tennis Complex', 50, 'Hard court tennis facility', TRUE),
-('Badminton Hall', 'Indoor Arena', 80, '4 badminton courts with wooden flooring', TRUE),
-('Volleyball Court', 'Beach Sports Area', 100, 'Beach volleyball court', TRUE);
+('Pickleball Court 1', 'Indoor Arena', 8, 'Pickleball court with net and lines', TRUE),
+('Pickleball Court 2', 'Indoor Arena', 8, 'Pickleball court with net and lines', TRUE),
+('Cricket Turf', 'Sports Complex A', 500, 'Cricket turf ground', TRUE),
+('Football Turf', 'Sports Complex A', 200, 'Football turf ground', TRUE),
+('Basketball Court 1', 'Indoor Arena', 100, 'Indoor basketball court', TRUE),
+('Basketball Court 2', 'Indoor Arena', 100, 'Indoor basketball court', TRUE),
+('Badminton Court', 'Indoor Arena', 80, 'Badminton court with wooden flooring', TRUE),
+('Volleyball Court', 'Beach Sports Area', 100, 'Volleyball court', TRUE);
 
 -- Insert sample equipment
 INSERT INTO equipment (name, category, description, total_quantity, available_quantity, status) VALUES
