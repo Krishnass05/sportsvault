@@ -2,8 +2,8 @@
 
 // Use relative /api paths.
 // - Local dev: Express serves frontend + backend on localhost:3000, so /api hits the same server.
-// - Production (Vercel): vercel.json rewrites /api/* to the Railway backend.
-const API_BASE_URL = 'https://sportsvault-api.onrender.com';
+// - Production (Vercel): vercel.json rewrites /api/* to the Render backend.
+const API_BASE_URL = 'https://sportsvault-api.onrender.com/api';
 
 
 // Check if user is authenticated
