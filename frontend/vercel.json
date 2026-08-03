@@ -8,7 +8,6 @@
     { "source": "/equipment", "destination": "/html/equipment.html" },
     { "source": "/maintenance", "destination": "/html/maintenance.html" },
     { "source": "/reports", "destination": "/html/reports.html" },
-    { "source": "/api/:path*", "destination": "https://sportsvault-production.up.railway.app/api/:path*" }
+    { "source": "/api/:path*", "destination": "https://sportsvault-api.onrender.com/api/:path*" }
   ]
 }
-
