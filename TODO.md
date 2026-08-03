@@ -7,4 +7,4 @@
 - [x] 4. Update database/supabase_schema.sql seed data (admin users + new venues)
 - [x] 5. Replace venues with new list in all seed files
 - [x] 6. Update README.md / SETUP.md admin credentials references
-- [ ] 7. Push changes to git
+- [x] 7. Push changes to git
