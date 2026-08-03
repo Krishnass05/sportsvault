@@ -5,6 +5,7 @@ services:
     repo: https://github.com/Krishnass05/sportsvault
     branch: main
     rootDir: backend
+    plan: free
     buildCommand: npm install
     startCommand: node server.js
     envVars:
@@ -15,10 +16,10 @@ services:
       - key: DB_USER
         value: postgres
       - key: DB_PASSWORD
-        value: Sanjana@2005
+        sync: false
       - key: DB_NAME
         value: postgres
       - key: DB_SSL
         value: "true"
       - key: JWT_SECRET
-        value: sportvault_secret_key_2024
+        sync: false
