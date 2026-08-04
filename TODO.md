@@ -14,7 +14,11 @@
 - [x] 7. Replace `downloadMonthlyPDF()` in dashboard.js with improved version
 - [x] 7b. Apply the same enhanced table formatting to `downloadMonthlyPDF()` in reports.js (feedback: data must be shown in a PDF table)
 
+## Cache fix (feedback: "nothing is changed")
+- [x] Add no-cache headers to static file serving in backend/server.js so updated JS/CSS/HTML are always served fresh (browser was serving stale cached files)
+
 ## Verification
 - [x] Verify charts render with real booking data (code verified)
 - [x] Verify charts refresh after booking changes (code verified)
 - [x] Verify PDF formatting — navy header banner, stat boxes, table with alternating rows, page-number footer (both dashboard.js and reports.js)
+- [ ] Hard-refresh browser (Ctrl+F5) / restart server to pick up changes

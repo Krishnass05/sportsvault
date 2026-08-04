@@ -13,7 +13,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from frontend
-app.use(express.static(path.join(__dirname, '../frontend')));
+// Disable caching so updated JS/CSS are always served fresh during development
+app.use(express.static(path.join(__dirname, '../frontend'), {
+    maxAge: '1h',
+    setHeaders: (res, path) => {
+        if (path.endsWith('.js') || path.endsWith('.css') || path.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
+    }
+}));
 
 // Import routes
 const authRoutes = require('./routes/auth');
