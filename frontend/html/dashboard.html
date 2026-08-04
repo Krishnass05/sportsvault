@@ -206,11 +206,15 @@
             <div class="card" id="reports-section">
                 <div class="card-header">
                     <h2 class="card-title">Reports Dashboard</h2>
-                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
                         <label class="form-label" style="margin: 0;">Month:</label>
                         <input type="month" class="form-control" id="report-month" style="width: auto;">
+                        <label class="form-label" style="margin: 0;">Sport/Venue:</label>
+                        <select class="form-control" id="report-venue-filter" style="width: auto;" onchange="loadMonthlyReport()">
+                            <option value="all">All Sports</option>
+                        </select>
                         <button class="btn btn-primary btn-sm" onclick="loadMonthlyReport()">Load Report</button>
-                        <button class="btn btn-secondary btn-sm" onclick="downloadMonthlyCSV()">Download CSV</button>
+                        <button class="btn btn-secondary btn-sm" onclick="downloadMonthlyPDF()">Download PDF</button>
                     </div>
                 </div>
 
@@ -238,7 +242,8 @@
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Booked By</th>
+<th>Booked By</th>
+                                    <th>SAP ID</th>
                                     <th>Venue</th>
                                     <th>Date</th>
                                     <th>Time</th>
@@ -249,8 +254,8 @@
                                     <th>Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="report-bookings-tbody">
-                                <tr><td colspan="9" class="empty-state">Select a month and load report</td></tr>
+<tbody id="report-bookings-tbody">
+                                <tr><td colspan="10" class="empty-state">Select a month and load report</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -269,7 +274,9 @@
         <p><strong>Currently studying in:</strong> NMIMS Hyderabad</p>
     </footer>
 
-    <script src="../js/auth.js"></script>
+<script src="../js/auth.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script src="../js/dashboard.js"></script>
 </body>
 </html>

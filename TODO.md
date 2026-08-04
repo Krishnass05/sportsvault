@@ -18,3 +18,11 @@
 - jsPDF + jspdf-autotable loaded via CDN (no install needed)
 - PDF/CSV filenames include venue name when a specific sport is selected
 
+## Dashboard Reports Section (new)
+- [x] 1. dashboard.html: Add jsPDF CDN scripts + Sport/Venue dropdown + Download PDF button (replace CSV)
+- [x] 2. dashboard.html: Add SAP ID `<th>` + update colspan to 10
+- [x] 3. dashboard.js: Add `populateVenueFilter()` + call from `loadAdminDashboard()`
+- [x] 4. dashboard.js: Update `loadMonthlyReport()` (filter + recompute stats + SAP ID cell)
+- [x] 5. dashboard.js: Replace `downloadMonthlyCSV()` with `downloadMonthlyPDF()` + expose on window
+- [x] 6. Verify, commit & push
+
