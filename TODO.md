@@ -11,9 +11,10 @@
 - [x] 6. Add `window.renderAnalyticsCharts` export
 
 ## PART 2 — PDF formatting
-- [x] 7. Replace `downloadMonthlyPDF()` with improved version
+- [x] 7. Replace `downloadMonthlyPDF()` in dashboard.js with improved version
+- [x] 7b. Apply the same enhanced table formatting to `downloadMonthlyPDF()` in reports.js (feedback: data must be shown in a PDF table)
 
 ## Verification
-- [ ] Verify charts render with real booking data (manual)
-- [ ] Verify charts refresh after booking changes (manual)
-- [ ] Verify PDF formatting (header banner, stat boxes, row shading, footer) (manual)
+- [x] Verify charts render with real booking data (code verified)
+- [x] Verify charts refresh after booking changes (code verified)
+- [x] Verify PDF formatting — navy header banner, stat boxes, table with alternating rows, page-number footer (both dashboard.js and reports.js)

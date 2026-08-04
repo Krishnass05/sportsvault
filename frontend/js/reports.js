@@ -208,7 +208,7 @@ function downloadMonthlyPDF() {
     const selectedVenueId = venueFilter ? venueFilter.value : 'all';
     const selectedOption = venueFilter ? venueFilter.options[venueFilter.selectedIndex] : null;
 
-    // Build the dynamic title
+// Build the dynamic title
     let title = `SportVault - Booking Report - ${month}`;
     if (selectedVenueId && selectedVenueId !== 'all' && selectedOption) {
         title = `SportVault - ${selectedOption.textContent} Booking Report - ${month}`;
@@ -241,16 +241,89 @@ function downloadMonthlyPDF() {
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'landscape' });
+    const pageWidth = doc.internal.pageSize.getWidth();
 
+    // Header banner
+    doc.setFillColor(11, 31, 58); // #0B1F3A
+    doc.rect(0, 0, pageWidth, 24, 'F');
+    doc.setTextColor(255, 255, 255);
     doc.setFontSize(16);
-    doc.text(title, 14, 16);
+    doc.setFont(undefined, 'bold');
+    doc.text('SportVault', 14, 11);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(title, 14, 18);
 
+    const generatedOn = new Date().toLocaleString('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+    });
+    doc.setFontSize(9);
+    doc.text(`Generated: ${generatedOn}`, pageWidth - 14, 18, { align: 'right' });
+
+    doc.setTextColor(0, 0, 0);
+
+    // Summary stat boxes
+    const total = document.getElementById('report-total').textContent;
+    const confirmed = document.getElementById('report-confirmed').textContent;
+    const cancelled = document.getElementById('report-cancelled').textContent;
+    const student = document.getElementById('report-student').textContent;
+
+    const stats = [
+        { label: 'Total Bookings', value: total },
+        { label: 'Confirmed', value: confirmed },
+        { label: 'Cancelled', value: cancelled },
+        { label: 'Student Bookings', value: student }
+    ];
+
+    const boxWidth = (pageWidth - 28) / 4;
+    let boxX = 14;
+    const boxY = 30;
+
+    stats.forEach(stat => {
+        doc.setFillColor(245, 247, 250);
+        doc.setDrawColor(220, 224, 230);
+        doc.roundedRect(boxX, boxY, boxWidth - 4, 16, 2, 2, 'FD');
+        doc.setFontSize(13);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(11, 31, 58);
+        doc.text(String(stat.value), boxX + (boxWidth - 4) / 2, boxY + 7, { align: 'center' });
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text(stat.label, boxX + (boxWidth - 4) / 2, boxY + 13, { align: 'center' });
+        boxX += boxWidth;
+    });
+
+    doc.setTextColor(0, 0, 0);
+
+    // Main data table
     doc.autoTable({
         head: [headers],
         body: dataRows,
-        startY: 24,
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [25, 42, 86] }
+        startY: 52,
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: [11, 31, 58], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [245, 247, 250] },
+        columnStyles: {
+            0: { cellWidth: 30 },
+            1: { cellWidth: 22 },
+            2: { cellWidth: 30 },
+            7: { cellWidth: 45 }
+        },
+        didDrawPage: (data) => {
+            const pageCount = doc.internal.getNumberOfPages();
+            const pageCurrent = doc.internal.getCurrentPageInfo().pageNumber;
+            doc.setFontSize(8);
+            doc.setTextColor(130, 130, 130);
+            doc.text(
+                `Page ${pageCurrent} of ${pageCount}`,
+                pageWidth - 14,
+                doc.internal.pageSize.getHeight() - 8,
+                { align: 'right' }
+            );
+            doc.text('SportVault — Sports Equipment & Venue Management System', 14, doc.internal.pageSize.getHeight() - 8);
+        }
     });
 
     doc.save(`${buildDownloadBaseName()}.pdf`);

@@ -873,7 +873,7 @@ function downloadMonthlyPDF() {
     doc.autoTable({
         head: [headers],
         body: dataRows,
-        startY: 52,
+startY: 52,
         styles: { fontSize: 8, cellPadding: 3 },
         headStyles: { fillColor: [11, 31, 58], textColor: 255, fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [245, 247, 250] },
@@ -894,7 +894,7 @@ function downloadMonthlyPDF() {
                 doc.internal.pageSize.getHeight() - 8,
                 { align: 'right' }
             );
-            doc.text('SportVault — Sports Equipment & Venue Management System', 14, doc.internal.pageSize.getHeight() - 8);
+doc.text('SportVault — Sports Equipment & Venue Management System', 14, doc.internal.pageSize.getHeight() - 8);
         }
     });
 
