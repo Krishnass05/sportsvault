@@ -4,8 +4,28 @@
 async function loadAllReports() {
     await Promise.all([
         loadSummaryStats(),
-        setupReportMonth()
+        setupReportMonth(),
+        populateVenueFilter()
     ]);
+}
+
+// Populate the Sport/Venue filter dropdown with all venues
+async function populateVenueFilter() {
+    try {
+        const data = await apiRequest('/bookings/venues');
+        const select = document.getElementById('report-venue-filter');
+        if (!select) return;
+
+        const venues = data.venues || [];
+        venues.forEach(v => {
+            const option = document.createElement('option');
+            option.value = v.id;
+            option.textContent = v.name;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Failed to load venues:', error);
+    }
 }
 
 // Load summary statistics
@@ -52,38 +72,68 @@ async function loadMonthlyReport() {
     try {
         const data = await apiRequest(`/bookings/reports?month=${month}`);
 
-        document.getElementById('report-total').textContent = data.totalBookings || 0;
-        document.getElementById('report-confirmed').textContent = data.confirmedBookings || 0;
-        document.getElementById('report-cancelled').textContent = data.cancelledBookings || 0;
-        document.getElementById('report-student').textContent = (data.byType && data.byType.student) || 0;
+        // Apply venue/sport filter when a specific venue is selected
+        let bookings = data.bookings || [];
+        const venueFilter = document.getElementById('report-venue-filter');
+        const selectedVenueId = venueFilter ? venueFilter.value : 'all';
+
+        if (selectedVenueId && selectedVenueId !== 'all') {
+            bookings = bookings.filter(b => String(b.venue_id) === String(selectedVenueId));
+        }
+
+        // Compute stats from the (possibly filtered) booking set
+        const confirmed = bookings.filter(b => b.status === 'confirmed');
+        const cancelled = bookings.filter(b => b.status === 'cancelled');
+        const studentCount = confirmed.filter(b => (b.booking_type || 'student') === 'student').length;
+
+        document.getElementById('report-total').textContent = bookings.length;
+        document.getElementById('report-confirmed').textContent = confirmed.length;
+        document.getElementById('report-cancelled').textContent = cancelled.length;
+        document.getElementById('report-student').textContent = studentCount;
 
         const tbody = document.getElementById('report-bookings-tbody');
         if (!tbody) return;
 
-if (!data.bookings || data.bookings.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No bookings for this month</td></tr>';
-            } else {
-                tbody.innerHTML = data.bookings.map(b => `
-                    <tr>
-                        <td>${escapeHtml(b.user_name)}</td>
-                        <td>${escapeHtml(b.venue_name)}</td>
-                        <td>${formatDate(b.booking_date)}</td>
-                        <td>${formatTime(b.start_time)} - ${formatTime(b.end_time)}</td>
-                        <td>${b.booking_type || 'student'}</td>
-                        <td>${b.approx_students ? escapeHtml(b.approx_students) : '-'}</td>
-                        <td>${escapeHtml(b.purpose || '-')}</td>
-                        <td><span class="badge ${b.status === 'confirmed' ? 'badge-success' : 'badge-secondary'}">${b.status}</span></td>
-                        <td>
-                            ${b.status === 'confirmed' ? `
-                                <button class="btn btn-danger btn-sm" onclick="cancelReportBooking(${b.id})">Cancel</button>
-                            ` : '-'}
-                        </td>
-                    </tr>
-                `).join('');
-            }
+        if (!bookings.length) {
+            tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No bookings for this month</td></tr>';
+        } else {
+            tbody.innerHTML = bookings.map(b => `
+                <tr>
+                    <td>${escapeHtml(b.user_name)}</td>
+                    <td>${escapeHtml(b.sap_id || '-')}</td>
+                    <td>${escapeHtml(b.venue_name)}</td>
+                    <td>${formatDate(b.booking_date)}</td>
+                    <td>${formatTime(b.start_time)} - ${formatTime(b.end_time)}</td>
+                    <td>${b.booking_type || 'student'}</td>
+                    <td>${b.approx_students ? escapeHtml(b.approx_students) : '-'}</td>
+                    <td>${escapeHtml(b.purpose || '-')}</td>
+                    <td><span class="badge ${b.status === 'confirmed' ? 'badge-success' : 'badge-secondary'}">${b.status}</span></td>
+                    <td>
+                        ${b.status === 'confirmed' ? `
+                            <button class="btn btn-danger btn-sm" onclick="cancelReportBooking(${b.id})">Cancel</button>
+                        ` : '-'}
+                    </td>
+                </tr>
+            `).join('');
+        }
     } catch (error) {
         showAlert(error.message || 'Failed to load report', 'error');
     }
+}
+
+// Build a sanitized base filename reflecting the active venue filter
+function buildDownloadBaseName() {
+    const month = document.getElementById('report-month').value || 'month';
+    const venueFilter = document.getElementById('report-venue-filter');
+    const selectedVenueId = venueFilter ? venueFilter.value : 'all';
+    const selectedOption = venueFilter ? venueFilter.options[venueFilter.selectedIndex] : null;
+
+    if (selectedVenueId && selectedVenueId !== 'all' && selectedOption) {
+        // Include the venue/sport name in the filename
+        const venueName = selectedOption.textContent || 'venue';
+        return `booking_report_${venueName.replace(/[\s/\\]+/g, '_')}_${month}`;
+    }
+    return `booking_report_${month}`;
 }
 
 // Download monthly report as CSV
@@ -97,12 +147,12 @@ function downloadMonthlyCSV() {
         return;
     }
 
-const headers = ['Booked By', 'Venue', 'Date', 'Time', 'Type', 'Approx Students', 'Purpose', 'Status'];
+    const headers = ['Booked By', 'SAP ID', 'Venue', 'Date', 'Time', 'Type', 'Approx Students', 'Purpose', 'Status'];
     const dataRows = [];
 
     rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        if (cells.length >= 8) {
+const cells = row.querySelectorAll('td');
+        if (cells.length >= 9) {
             dataRows.push([
                 cells[0].textContent.trim(),
                 cells[1].textContent.trim(),
@@ -111,7 +161,8 @@ const headers = ['Booked By', 'Venue', 'Date', 'Time', 'Type', 'Approx Students'
                 cells[4].textContent.trim(),
                 cells[5].textContent.trim(),
                 cells[6].textContent.trim(),
-                cells[7].textContent.trim()
+                cells[7].textContent.trim(),
+                cells[8].textContent.trim()
             ]);
         }
     });
@@ -130,8 +181,8 @@ const headers = ['Booked By', 'Venue', 'Date', 'Time', 'Type', 'Approx Students'
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
 
-    link.setAttribute('href', url);
-    link.setAttribute('download', `booking_report_${document.getElementById('report-month').value}.csv`);
+link.setAttribute('href', url);
+    link.setAttribute('download', `${buildDownloadBaseName()}.csv`);
     link.style.visibility = 'hidden';
 
     document.body.appendChild(link);
@@ -139,6 +190,71 @@ const headers = ['Booked By', 'Venue', 'Date', 'Time', 'Type', 'Approx Students'
     document.body.removeChild(link);
 
     showAlert('Report downloaded as CSV', 'success');
+}
+
+// Download monthly report as PDF
+function downloadMonthlyPDF() {
+    const tbody = document.getElementById('report-bookings-tbody');
+    if (!tbody) return;
+
+    const rows = tbody.querySelectorAll('tr');
+    if (!rows.length || (rows.length === 1 && rows[0].querySelector('.empty-state'))) {
+        showAlert('No report data to download. Load a report first.', 'warning');
+        return;
+    }
+
+    const month = document.getElementById('report-month').value || 'month';
+    const venueFilter = document.getElementById('report-venue-filter');
+    const selectedVenueId = venueFilter ? venueFilter.value : 'all';
+    const selectedOption = venueFilter ? venueFilter.options[venueFilter.selectedIndex] : null;
+
+    // Build the dynamic title
+    let title = `SportVault - Booking Report - ${month}`;
+    if (selectedVenueId && selectedVenueId !== 'all' && selectedOption) {
+        title = `SportVault - ${selectedOption.textContent} Booking Report - ${month}`;
+    }
+
+    const headers = ['Booked By', 'SAP ID', 'Venue', 'Date', 'Time', 'Type', 'Approx Students', 'Purpose', 'Status'];
+    const dataRows = [];
+
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 9) {
+            dataRows.push([
+                cells[0].textContent.trim(),
+                cells[1].textContent.trim(),
+                cells[2].textContent.trim(),
+                cells[3].textContent.trim(),
+                cells[4].textContent.trim(),
+                cells[5].textContent.trim(),
+                cells[6].textContent.trim(),
+                cells[7].textContent.trim(),
+                cells[8].textContent.trim()
+            ]);
+        }
+    });
+
+    if (dataRows.length === 0) {
+        showAlert('No report data to download', 'warning');
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape' });
+
+    doc.setFontSize(16);
+    doc.text(title, 14, 16);
+
+    doc.autoTable({
+        head: [headers],
+        body: dataRows,
+        startY: 24,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [25, 42, 86] }
+    });
+
+    doc.save(`${buildDownloadBaseName()}.pdf`);
+    showAlert('Report downloaded as PDF', 'success');
 }
 
 // Cancel booking directly from the reports table (admin only)

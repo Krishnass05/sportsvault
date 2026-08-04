@@ -13,7 +13,13 @@ const transporter = nodemailer.createTransport({
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
     },
-    family: 4          // ← ADD THIS LINE
+    family: 4,          // ← ADD THIS LINE
+    pool: true,
+    maxConnections: 3,
+    maxMessages: 50,
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000
 });
 
 const fromAddress = process.env.EMAIL_FROM

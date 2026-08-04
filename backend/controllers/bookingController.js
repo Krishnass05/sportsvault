@@ -313,7 +313,7 @@ exports.getBookingReports = async (req, res) => {
         }
 
         const { rows: bookings } = await db.query(
-            `SELECT b.*, v.name as venue_name, v.location, u.name as user_name, u.email as user_email
+`SELECT b.*, v.name as venue_name, v.location, u.name as user_name, u.email as user_email, u.student_id as sap_id
              FROM bookings b
              JOIN venues v ON b.venue_id = v.id
              JOIN users u ON b.user_id = u.id
