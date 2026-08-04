@@ -120,47 +120,51 @@ exports.createBooking = async (req, res) => {
             [venue_id, userId, booking_date, timeValidation.startTime, timeValidation.endTime, purpose || '', approx_students ? parseInt(approx_students) || null : null, finalType]
         );
 
-        // --- Send email notification to the student (or the booking user) ---
-        try {
-            // Fetch the recipient user (the user the booking belongs to)
-            const { rows: userRows } = await db.query(
-                'SELECT id, name, email FROM users WHERE id = $1',
-                [userId]
-            );
-
-            // Fetch the venue name for the email
-            const { rows: venueRows } = await db.query(
-                'SELECT name FROM venues WHERE id = $1',
-                [venue_id]
-            );
-
-            const recipient = userRows[0];
-            const venueName = venueRows[0] ? venueRows[0].name : 'Venue';
-
-            if (recipient && recipient.email) {
-                await emailService.sendBookingConfirmation(
-                    recipient.email,
-                    recipient.name,
-                    {
-                        venueName,
-                        bookingDate,
-                        startTime: timeValidation.startTime,
-                        endTime: timeValidation.endTime,
-                        purpose,
-                        bookingType: finalType
-                    }
-                );
-            }
-        } catch (emailError) {
-            // Email failure should not fail the booking creation
-            console.error('Failed to send booking confirmation email:', emailError.message);
-        }
-
         res.status(201).json({
             message: 'Booking confirmed successfully',
             bookingId: result.rows[0].id,
             status: 'confirmed'
         });
+
+        // --- Send email notification to the student (or the booking user) ---
+        // Run after the response is sent so a slow/unreachable SMTP server
+        // does not block the client's response.
+        (async () => {
+            try {
+                // Fetch the recipient user (the user the booking belongs to)
+                const { rows: userRows } = await db.query(
+                    'SELECT id, name, email FROM users WHERE id = $1',
+                    [userId]
+                );
+
+                // Fetch the venue name for the email
+                const { rows: venueRows } = await db.query(
+                    'SELECT name FROM venues WHERE id = $1',
+                    [venue_id]
+                );
+
+                const recipient = userRows[0];
+                const venueName = venueRows[0] ? venueRows[0].name : 'Venue';
+
+                if (recipient && recipient.email) {
+                    await emailService.sendBookingConfirmation(
+                        recipient.email,
+                        recipient.name,
+                        {
+                            venueName,
+                            bookingDate,
+                            startTime: timeValidation.startTime,
+                            endTime: timeValidation.endTime,
+                            purpose,
+                            bookingType: finalType
+                        }
+                    );
+                }
+            } catch (emailError) {
+                // Email failure should not fail the booking creation
+                console.error('Failed to send booking confirmation email:', emailError.message);
+            }
+        })();
     } catch (error) {
         console.error('Create booking error:', error);
         res.status(500).json({ message: 'Server error' });
@@ -189,42 +193,46 @@ exports.cancelBooking = async (req, res) => {
 
         await db.query('UPDATE bookings SET status = $1 WHERE id = $2', ['cancelled', id]);
 
-        // --- Send email notification about the cancellation ---
-        try {
-            // Fetch the booking user's info
-            const { rows: userRows } = await db.query(
-                'SELECT id, name, email FROM users WHERE id = $1',
-                [booking.user_id]
-            );
-
-            // Fetch the venue name
-            const { rows: venueRows } = await db.query(
-                'SELECT name FROM venues WHERE id = $1',
-                [booking.venue_id]
-            );
-
-            const recipient = userRows[0];
-            const venueName = venueRows[0] ? venueRows[0].name : 'Venue';
-
-            if (recipient && recipient.email) {
-                await emailService.sendBookingCancellation(
-                    recipient.email,
-                    recipient.name,
-                    {
-                        venueName,
-                        bookingDate: booking.booking_date,
-                        startTime: booking.start_time,
-                        endTime: booking.end_time,
-                        purpose: booking.purpose
-                    }
-                );
-            }
-        } catch (emailError) {
-            // Email failure should not fail the cancellation
-            console.error('Failed to send booking cancellation email:', emailError.message);
-        }
-
         res.json({ message: 'Booking cancelled successfully' });
+
+        // --- Send email notification about the cancellation ---
+        // Run after the response is sent so a slow/unreachable SMTP server
+        // does not block the client's response.
+        (async () => {
+            try {
+                // Fetch the booking user's info
+                const { rows: userRows } = await db.query(
+                    'SELECT id, name, email FROM users WHERE id = $1',
+                    [booking.user_id]
+                );
+
+                // Fetch the venue name
+                const { rows: venueRows } = await db.query(
+                    'SELECT name FROM venues WHERE id = $1',
+                    [booking.venue_id]
+                );
+
+                const recipient = userRows[0];
+                const venueName = venueRows[0] ? venueRows[0].name : 'Venue';
+
+                if (recipient && recipient.email) {
+                    await emailService.sendBookingCancellation(
+                        recipient.email,
+                        recipient.name,
+                        {
+                            venueName,
+                            bookingDate: booking.booking_date,
+                            startTime: booking.start_time,
+                            endTime: booking.end_time,
+                            purpose: booking.purpose
+                        }
+                    );
+                }
+            } catch (emailError) {
+                // Email failure should not fail the cancellation
+                console.error('Failed to send booking cancellation email:', emailError.message);
+            }
+        })();
     } catch (error) {
         console.error('Cancel booking error:', error);
         res.status(500).json({ message: 'Server error' });
