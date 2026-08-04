@@ -249,7 +249,7 @@ function downloadMonthlyPDF() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(16);
     doc.setFont(undefined, 'bold');
-    doc.text('SportVault', 14, 11);
+    doc.text('NMIMS BLR', 14, 11);
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
     doc.text(title, 14, 18);
@@ -322,7 +322,7 @@ function downloadMonthlyPDF() {
                 doc.internal.pageSize.getHeight() - 8,
                 { align: 'right' }
             );
-            doc.text('SportVault — Sports Equipment & Venue Management System', 14, doc.internal.pageSize.getHeight() - 8);
+            doc.text('NMIMS BLR — SportsVenue Management System', 14, doc.internal.pageSize.getHeight() - 8);
         }
     });
 
