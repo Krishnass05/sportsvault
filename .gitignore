@@ -17,6 +17,7 @@ Thumbs.db
 .vscode/
 .idea/
 
+
 # Database dumps
 *.sql.bak
 *.sql.old
@@ -25,3 +26,5 @@ Thumbs.db
 *.zip
 *.rar
 
+TODO.md 
+SETUP.md
