@@ -1,5 +1,7 @@
 // SportVault Reports Module - Booking Reports
 
+let allBookings = [];
+
 // Load all initial data
 async function loadAllReports() {
     await Promise.all([
@@ -7,6 +9,7 @@ async function loadAllReports() {
         setupReportMonth(),
         populateVenueFilter()
     ]);
+    renderAnalyticsCharts();
 }
 
 // Populate the Sport/Venue filter dropdown with all venues
@@ -37,7 +40,8 @@ async function loadSummaryStats() {
             apiRequest('/bookings/venues')
         ]);
 
-        const totalBookings = bookingsData.bookings ? bookingsData.bookings.length : 0;
+        allBookings = bookingsData.bookings || [];
+        const totalBookings = allBookings.length;
         document.getElementById('total-bookings-count').textContent = totalBookings;
         document.getElementById('active-students').textContent = statsData.totalStudents || 0;
 
@@ -335,11 +339,12 @@ async function cancelReportBooking(bookingId) {
     if (!confirm('Are you sure you want to cancel this booking?')) return;
 
     try {
-        await apiRequest(`/bookings/${bookingId}/cancel`, { method: 'PUT' });
+await apiRequest(`/bookings/${bookingId}/cancel`, { method: 'PUT' });
         showAlert('Booking cancelled successfully', 'success');
-        // Reload both the summary stats and the monthly report
-        loadSummaryStats();
+        // Reload the summary stats, monthly report, and analytics charts
+        await loadSummaryStats();
         loadMonthlyReport();
+        renderAnalyticsCharts();
     } catch (error) {
         showAlert(error.message || 'Failed to cancel booking', 'error');
     }
@@ -384,6 +389,200 @@ function showAlert(message, type = 'info') {
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);
+}
+
+// ==================== ANALYTICS CHARTS ====================
+
+let venuePieChartInstance = null;
+let weekdayBarChartInstance = null;
+let trendLineChartInstance = null;
+let typePieChartInstance = null;
+
+const CHART_COLORS = [
+    '#0B1F3A', '#1D4E89', '#2E86AB', '#5DA9E9',
+    '#8DC3F0', '#C0392B', '#E67E22', '#27AE60',
+    '#8E44AD', '#16A085'
+];
+
+function renderAnalyticsCharts() {
+    if (typeof Chart === 'undefined') {
+        console.warn('Chart.js not loaded, skipping analytics charts');
+        return;
+    }
+
+    const confirmed = allBookings.filter(b => b.status === 'confirmed');
+
+    renderVenuePieChart(confirmed);
+    renderWeekdayBarChart(confirmed);
+    renderTrendLineChart(confirmed);
+    renderTypePieChart(confirmed);
+}
+
+function renderVenuePieChart(confirmed) {
+    const canvas = document.getElementById('venue-pie-chart');
+    if (!canvas) return;
+
+    const counts = {};
+    confirmed.forEach(b => {
+        const name = b.venue_name || 'Unknown';
+        counts[name] = (counts[name] || 0) + 1;
+    });
+
+    const labels = Object.keys(counts);
+    const data = Object.values(counts);
+
+    if (venuePieChartInstance) venuePieChartInstance.destroy();
+
+    if (labels.length === 0) {
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+        return;
+    }
+
+    venuePieChartInstance = new Chart(canvas, {
+        type: 'pie',
+        data: {
+            labels,
+            datasets: [{
+                data,
+                backgroundColor: CHART_COLORS
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => {
+                            const total = data.reduce((a, b) => a + b, 0);
+                            const pct = total ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                            return `${ctx.label}: ${ctx.parsed} bookings (${pct}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderWeekdayBarChart(confirmed) {
+    const canvas = document.getElementById('weekday-bar-chart');
+    if (!canvas) return;
+
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+
+    confirmed.forEach(b => {
+        const d = new Date(b.booking_date + 'T00:00:00');
+        if (!isNaN(d)) counts[d.getDay()]++;
+    });
+
+    if (weekdayBarChartInstance) weekdayBarChartInstance.destroy();
+
+    weekdayBarChartInstance = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: dayNames,
+            datasets: [{
+                label: 'Confirmed Bookings',
+                data: counts,
+                backgroundColor: '#1D4E89'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 } }
+            }
+        }
+    });
+}
+
+function renderTrendLineChart(confirmed) {
+    const canvas = document.getElementById('trend-line-chart');
+    if (!canvas) return;
+
+    const days = [];
+    const counts = {};
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 29; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().split('T')[0];
+        days.push(key);
+        counts[key] = 0;
+    }
+
+    confirmed.forEach(b => {
+        if (counts.hasOwnProperty(b.booking_date)) {
+            counts[b.booking_date]++;
+        }
+    });
+
+    if (trendLineChartInstance) trendLineChartInstance.destroy();
+
+    trendLineChartInstance = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: days.map(d => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+            datasets: [{
+                label: 'Bookings',
+                data: days.map(d => counts[d]),
+                borderColor: '#2E86AB',
+                backgroundColor: 'rgba(46, 134, 171, 0.15)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 } },
+                x: { ticks: { maxRotation: 60, minRotation: 45 } }
+            }
+        }
+    });
+}
+
+function renderTypePieChart(confirmed) {
+    const canvas = document.getElementById('type-pie-chart');
+    if (!canvas) return;
+
+    const counts = {};
+    confirmed.forEach(b => {
+        const type = b.booking_type || 'student';
+        counts[type] = (counts[type] || 0) + 1;
+    });
+
+    const labels = Object.keys(counts);
+    const data = Object.values(counts);
+
+    if (typePieChartInstance) typePieChartInstance.destroy();
+
+    if (labels.length === 0) {
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+        return;
+    }
+
+    typePieChartInstance = new Chart(canvas, {
+        type: 'pie',
+        data: {
+            labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+            datasets: [{
+                data,
+                backgroundColor: ['#0B1F3A', '#E67E22', '#27AE60']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
 }
 
 // Initialize reports page
