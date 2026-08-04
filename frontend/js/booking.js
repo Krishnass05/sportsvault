@@ -218,8 +218,15 @@ function selectSlot(start, end) {
 }
 
 // Create new booking
+// Create new booking
 async function createBooking(event) {
     event.preventDefault();
+
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    if (submitBtn.disabled) return; // extra safety against rapid double-clicks
+    submitBtn.disabled = true;
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Booking...';
 
     const formData = {
         venue_id: document.getElementById('booking-venue').value,
@@ -233,12 +240,16 @@ async function createBooking(event) {
     // Validate
     if (!formData.venue_id || !formData.booking_date || !formData.start_time || !formData.end_time) {
         showAlert('Please fill in all required fields', 'warning');
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
         return;
     }
 
     // Validate time
     if (formData.start_time >= formData.end_time) {
         showAlert('End time must be after start time', 'warning');
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
         return;
     }
 
@@ -248,6 +259,8 @@ async function createBooking(event) {
 
     if (startMin < 600 || endMin > 1140) { // 600 = 10:00, 1140 = 19:00
         showAlert('Bookings are only allowed between 10:00 AM and 7:00 PM', 'warning');
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
         return;
     }
 
@@ -255,6 +268,8 @@ async function createBooking(event) {
     const durationHours = (endMin - startMin) / 60;
     if (durationHours > 2) {
         showAlert('Maximum booking duration is 2 hours', 'warning');
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
         return;
     }
 
@@ -265,6 +280,8 @@ async function createBooking(event) {
 
     if (selectedDate < today) {
         showAlert('Cannot book for past dates', 'warning');
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
         return;
     }
 
@@ -288,9 +305,11 @@ async function createBooking(event) {
         }
     } catch (error) {
         showAlert(error.message || 'Failed to create booking', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
     }
 }
-
 // Cancel booking
 async function cancelBooking(bookingId) {
     if (!confirm('Are you sure you want to cancel this booking?')) {
