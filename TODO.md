@@ -1,28 +1,19 @@
-# SportVault - Monthly Report Enhancements TODO
+# TODO — Admin Analytics Charts & PDF Formatting
 
-## Steps
-- [x] 1. Update `getBookingReports` SQL to select `u.student_id as sap_id`
-- [x] 2. reports.html: Add jsPDF CDN script tags before `../js/reports.js`
-- [x] 3. reports.html: Add Sport/Venue dropdown after month input (with onchange)
-- [x] 4. reports.html: Add "Download PDF" button after "Download CSV"
-- [x] 5. reports.html: Add SAP ID `<th>` after "Booked By" header
-- [x] 6. reports.html: Update empty-state colspan 9 -> 10
-- [x] 7. reports.js: Add `populateVenueFilter()` and call from `loadAllReports()`
-- [x] 8. reports.js: Filter bookings + recompute stats in `loadMonthlyReport()` based on venue filter
-- [x] 9. reports.js: Add SAP ID `<td>` in row template
-- [x] 10. reports.js: Add `downloadMonthlyPDF()` using jsPDF + autotable
-- [x] 11. reports.js: Update `downloadMonthlyCSV()` (SAP ID column + venue-aware filename)
-- [x] 12. Verify: filter table/stats, SAP ID display, CSV & PDF downloads
+## PART 1 — Booking Analytics charts
+- [x] Explore repo / read dashboard.html and dashboard.js
+- [x] Present + confirm edit plan
+- [x] 1a. Add Chart.js CDN script tag in dashboard.html
+- [x] 1b. Add "Booking Analytics" card markup in dashboard.html
+- [x] 3. Add `renderAnalyticsCharts()` call in `loadAdminDashboard()`
+- [x] 4. Add analytics functions block in dashboard.js
+- [x] 5. Add `renderAnalyticsCharts()` calls in cancel/create success paths
+- [x] 6. Add `window.renderAnalyticsCharts` export
 
-## Notes
-- jsPDF + jspdf-autotable loaded via CDN (no install needed)
-- PDF/CSV filenames include venue name when a specific sport is selected
+## PART 2 — PDF formatting
+- [x] 7. Replace `downloadMonthlyPDF()` with improved version
 
-## Dashboard Reports Section (new)
-- [x] 1. dashboard.html: Add jsPDF CDN scripts + Sport/Venue dropdown + Download PDF button (replace CSV)
-- [x] 2. dashboard.html: Add SAP ID `<th>` + update colspan to 10
-- [x] 3. dashboard.js: Add `populateVenueFilter()` + call from `loadAdminDashboard()`
-- [x] 4. dashboard.js: Update `loadMonthlyReport()` (filter + recompute stats + SAP ID cell)
-- [x] 5. dashboard.js: Replace `downloadMonthlyCSV()` with `downloadMonthlyPDF()` + expose on window
-- [x] 6. Verify, commit & push
-
+## Verification
+- [ ] Verify charts render with real booking data (manual)
+- [ ] Verify charts refresh after booking changes (manual)
+- [ ] Verify PDF formatting (header banner, stat boxes, row shading, footer) (manual)
