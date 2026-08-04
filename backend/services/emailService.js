@@ -12,7 +12,8 @@ const transporter = nodemailer.createTransport({
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
-    }
+    },
+    family: 4          // ← ADD THIS LINE
 });
 
 const fromAddress = process.env.EMAIL_FROM
