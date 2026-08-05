@@ -34,19 +34,18 @@ function validateBookingTimes(startTime, endTime, { isAdmin = false } = {}) {
         return { valid: false, message: 'End time must be after start time' };
     }
 
-    const durationHours = (endMin - startMin) / 60;
+const durationHours = (endMin - startMin) / 60;
+    const openMin = BOOKING_START_HOUR * 60;
+    const closeMin = BOOKING_END_HOUR * 60;
 
-    if (!isAdmin) {
-        const openMin = BOOKING_START_HOUR * 60;
-        const closeMin = BOOKING_END_HOUR * 60;
+    // Enforce operating hours for ALL roles including admins
+    if (startMin < openMin || endMin > closeMin) {
+        return { valid: false, message: 'Bookings are only allowed between 10:00 AM and 7:00 PM' };
+    }
 
-        if (startMin < openMin || endMin > closeMin) {
-            return { valid: false, message: 'Bookings are only allowed between 10:00 AM and 7:00 PM' };
-        }
-
-        if (durationHours > MAX_DURATION_HOURS) {
-            return { valid: false, message: 'Maximum booking duration is 2 hours' };
-        }
+    // Maximum duration of 2 hours only applies to non-admin (student) bookings
+    if (!isAdmin && durationHours > MAX_DURATION_HOURS) {
+        return { valid: false, message: 'Maximum booking duration is 2 hours' };
     }
 
     return { valid: true, startTime: start, endTime: end, durationHours };

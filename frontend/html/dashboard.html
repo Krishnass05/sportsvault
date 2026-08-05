@@ -79,73 +79,7 @@
                     </div>
                 </div>
 
-                <!-- Student CSV Upload -->
-                <div class="card" style="margin-bottom: 1.5rem;">
-                    <div class="card-header">
-                        <h3 class="card-title">Upload Student Records (CSV)</h3>
-                    </div>
-                    <p style="margin-bottom: 1rem; color: #666;">
-                        Required column: <strong>SAP ID</strong>. Name and School are collected during student registration. Duplicate SAP IDs are skipped.
-                    </p>
-                    <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                        <input type="file" id="student-csv-upload" accept=".csv" style="display: none;">
-                        <button class="btn btn-secondary" onclick="document.getElementById('student-csv-upload').click()">Choose CSV File</button>
-                        <span id="csv-upload-result" style="color: #666;"></span>
-                    </div>
-                </div>
-
-                <!-- Venue Management -->
-                <div class="card" style="margin-bottom: 1.5rem;">
-                    <div class="card-header">
-                        <h3 class="card-title">Venue Management</h3>
-                        <button class="btn btn-primary btn-sm" onclick="showVenueForm()">Add Venue</button>
-                    </div>
-                    <div id="venue-form-container" class="hidden" style="margin-bottom: 1rem; padding: 1rem; background: #f9f9f9; border-radius: 8px;">
-                        <form id="venue-form">
-                            <input type="hidden" id="venue-edit-id">
-                            <div class="form-row">
-                                <div class="form-group" style="flex: 1;">
-                                    <label class="form-label">Venue Name *</label>
-                                    <input type="text" class="form-control" id="venue-name" required>
-                                </div>
-                                <div class="form-group" style="flex: 1;">
-                                    <label class="form-label">Location</label>
-                                    <input type="text" class="form-control" id="venue-location">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group" style="flex: 1;">
-                                    <label class="form-label">Capacity</label>
-                                    <input type="number" class="form-control" id="venue-capacity" min="1">
-                                </div>
-                                <div class="form-group" style="flex: 2;">
-                                    <label class="form-label">Description</label>
-                                    <input type="text" class="form-control" id="venue-description">
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Save Venue</button>
-                            <button type="button" class="btn btn-secondary" onclick="hideVenueForm()">Cancel</button>
-                        </form>
-                    </div>
-                    <div class="table-container">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Location</th>
-                                    <th>Capacity</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="venues-tbody">
-                                <tr><td colspan="5" class="empty-state">Loading...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Admin Create Booking -->
+<!-- Admin Create Booking -->
                 <div class="card" style="margin-bottom: 1.5rem;">
                     <div class="card-header"><h3 class="card-title">Create Institutional Booking</h3></div>
                     <p style="margin-bottom: 1rem; color: #666;">Reserve venues for events, tournaments, or maintenance. These slots block student bookings.</p>
@@ -158,13 +92,14 @@
                             <label class="form-label">Date</label>
                             <input type="date" class="form-control" id="admin-booking-date" required>
                         </div>
-                        <div class="form-group" style="min-width: 120px;">
+<div class="form-group" style="min-width: 120px;">
                             <label class="form-label">Start</label>
-                            <input type="time" class="form-control" id="admin-booking-start" required>
+                            <input type="time" class="form-control" id="admin-booking-start" min="10:00" max="18:00" required>
+                            <small style="color: #666;">10:00 AM - 7:00 PM</small>
                         </div>
                         <div class="form-group" style="min-width: 120px;">
                             <label class="form-label">End</label>
-                            <input type="time" class="form-control" id="admin-booking-end" required>
+                            <input type="time" class="form-control" id="admin-booking-end" min="10:00" max="19:00" required>
                         </div>
                         <div class="form-group" style="min-width: 140px;">
                             <label class="form-label">Type</label>

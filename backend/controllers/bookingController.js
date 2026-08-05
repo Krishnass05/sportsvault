@@ -99,15 +99,28 @@ exports.createBooking = async (req, res) => {
             return res.status(400).json({ message: 'Cannot book for past dates' });
         }
 
-        const conflicts = await findConflictingBookings(
+const conflicts = await findConflictingBookings(
             venue_id,
             booking_date,
             timeValidation.startTime,
             timeValidation.endTime
         );
 
-        if (conflicts.length > 0) {
+        // Admins can override/auto-cancel conflicting confirmed bookings.
+        // Students cannot - they must choose an available slot.
+        if (conflicts.length > 0 && !isAdmin) {
             return res.status(409).json({ message: 'This time slot is already booked. Please choose another slot.' });
+        }
+
+        // Automatically cancel all conflicting confirmed bookings when an admin books this slot
+        let autoCancelled = [];
+        if (isAdmin && conflicts.length > 0) {
+            const conflictIds = conflicts.map(c => c.id);
+            const updateResult = await db.query(
+                `UPDATE bookings SET status = 'cancelled' WHERE id = ANY($1::int[]) RETURNING id`,
+                [conflictIds]
+            );
+            autoCancelled = updateResult.rows.map(r => r.id);
         }
 
         const bookingType = isAdmin ? (req.body.booking_type || 'admin') : 'student';

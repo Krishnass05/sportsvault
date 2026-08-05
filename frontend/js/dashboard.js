@@ -83,7 +83,7 @@ async function cancelStudentBooking(bookingId) {
 // ==================== ADMIN DASHBOARD ====================
 
 async function loadAdminDashboard() {
-await Promise.all([
+    await Promise.all([
         loadAdminStats(),
         loadVenues(),
         loadAdminBookings(),
@@ -92,7 +92,6 @@ await Promise.all([
 
     renderAnalyticsCharts();
     initAdminForms();
-    initCSVUpload();
     setupReportMonth();
 }
 
@@ -136,49 +135,18 @@ async function loadAdminStats() {
     }
 }
 
-// ==================== VENUE MANAGEMENT ====================
+// ==================== VENUES FOR BOOKING DROPDOWN ====================
 
 async function loadVenues() {
     try {
         const data = await apiRequest('/bookings/venues');
         allVenues = data.venues || [];
-        renderVenues(allVenues);
 
-        // Also populate admin booking venue select
+        // Populate admin booking venue select
         populateVenueSelect();
     } catch (error) {
         console.error('Failed to load venues:', error);
     }
-}
-
-function renderVenues(venues) {
-    const tbody = document.getElementById('venues-tbody');
-    if (!tbody) return;
-
-    if (venues.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No venues found</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = venues.map(v => `
-        <tr>
-            <td><strong>${escapeHtml(v.name)}</strong></td>
-            <td>${escapeHtml(v.location || 'N/A')}</td>
-            <td>${v.capacity || 'N/A'}</td>
-            <td>
-                <span class="badge ${v.is_active ? 'badge-success' : 'badge-secondary'}">
-                    ${v.is_active ? 'Active' : 'Inactive'}
-                </span>
-            </td>
-            <td>
-                <button class="btn btn-primary btn-sm" onclick="editVenue(${v.id})">Edit</button>
-                <button class="btn btn-${v.is_active ? 'warning' : 'success'} btn-sm" onclick="toggleVenue(${v.id}, ${!v.is_active})">
-                    ${v.is_active ? 'Disable' : 'Enable'}
-                </button>
-                <button class="btn btn-danger btn-sm" onclick="deleteVenue(${v.id})">Delete</button>
-            </td>
-        </tr>
-    `).join('');
 }
 
 function populateVenueSelect() {
@@ -188,91 +156,6 @@ function populateVenueSelect() {
             allVenues.filter(v => v.is_active !== false).map(v =>
                 `<option value="${v.id}">${escapeHtml(v.name)}${v.location ? ' - ' + escapeHtml(v.location) : ''}</option>`
             ).join('');
-    }
-}
-
-function showVenueForm(venue = null) {
-    const container = document.getElementById('venue-form-container');
-    container.classList.remove('hidden');
-
-    if (venue) {
-        document.getElementById('venue-edit-id').value = venue.id;
-        document.getElementById('venue-name').value = venue.name;
-        document.getElementById('venue-location').value = venue.location || '';
-        document.getElementById('venue-capacity').value = venue.capacity || '';
-        document.getElementById('venue-description').value = venue.description || '';
-    } else {
-        document.getElementById('venue-form').reset();
-        document.getElementById('venue-edit-id').value = '';
-    }
-}
-
-function hideVenueForm() {
-    document.getElementById('venue-form-container').classList.add('hidden');
-}
-
-async function handleVenueForm(event) {
-    event.preventDefault();
-
-    const editId = document.getElementById('venue-edit-id').value;
-    const formData = {
-        name: document.getElementById('venue-name').value,
-        location: document.getElementById('venue-location').value,
-        capacity: parseInt(document.getElementById('venue-capacity').value) || null,
-        description: document.getElementById('venue-description').value
-    };
-
-    try {
-        if (editId) {
-            await apiRequest(`/bookings/venues/${editId}`, {
-                method: 'PUT',
-                body: JSON.stringify(formData)
-            });
-            showAlert('Venue updated successfully', 'success');
-        } else {
-            await apiRequest('/bookings/venues', {
-                method: 'POST',
-                body: JSON.stringify(formData)
-            });
-            showAlert('Venue created successfully', 'success');
-        }
-
-        hideVenueForm();
-        loadVenues();
-    } catch (error) {
-        showAlert(error.message || 'Failed to save venue', 'error');
-    }
-}
-
-function editVenue(id) {
-    const venue = allVenues.find(v => v.id === id);
-    if (venue) showVenueForm(venue);
-}
-
-async function toggleVenue(id, isActive) {
-    try {
-        await apiRequest(`/bookings/venues/${id}/status`, {
-            method: 'PATCH',
-            body: JSON.stringify({ is_active: isActive })
-        });
-        showAlert(`Venue ${isActive ? 'enabled' : 'disabled'} successfully`, 'success');
-        loadVenues();
-    } catch (error) {
-        showAlert(error.message || 'Failed to toggle venue', 'error');
-    }
-}
-
-async function deleteVenue(id) {
-    if (!confirm('Are you sure you want to delete this venue?')) return;
-
-    try {
-        await apiRequest(`/bookings/venues/${id}`, {
-            method: 'DELETE'
-        });
-        showAlert('Venue deleted successfully', 'success');
-        loadVenues();
-    } catch (error) {
-        showAlert(error.message || 'Failed to delete venue', 'error');
     }
 }
 
@@ -586,6 +469,20 @@ async function handleAdminBooking(event) {
         return;
     }
 
+    // Validate time range: bookings only allowed between 10:00 AM and 7:00 PM
+    const startMin = timeToMinutes(formData.start_time);
+    const endMin = timeToMinutes(formData.end_time);
+
+    if (startMin >= endMin) {
+        showAlert('End time must be after start time', 'warning');
+        return;
+    }
+
+    if (startMin < 600 || endMin > 1140) { // 600 = 10:00, 1140 = 19:00
+        showAlert('Bookings are only allowed between 10:00 AM and 7:00 PM', 'warning');
+        return;
+    }
+
     try {
         await apiRequest('/bookings', {
             method: 'POST',
@@ -601,73 +498,9 @@ async function handleAdminBooking(event) {
     }
 }
 
-// ==================== CSV UPLOAD ====================
-
-function initCSVUpload() {
-    const fileInput = document.getElementById('student-csv-upload');
-    if (fileInput) {
-        fileInput.addEventListener('change', handleCSVUpload);
-    }
-}
-
-async function handleCSVUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const resultSpan = document.getElementById('csv-upload-result');
-    resultSpan.textContent = 'Parsing CSV...';
-
-    try {
-        const text = await file.text();
-        const lines = text.split('\n').filter(line => line.trim());
-        if (lines.length < 2) {
-            throw new Error('CSV file must have a header row and at least one data row');
-        }
-
-        const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-        const requiredHeaders = ['SAP ID'];
-        const hasHeaders = requiredHeaders.every(h => headers.includes(h));
-
-        if (!hasHeaders) {
-            resultSpan.textContent = 'Invalid CSV format. Required column: SAP ID';
-            resultSpan.style.color = 'red';
-            return;
-        }
-
-        const students = [];
-        for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
-            const row = {};
-            headers.forEach((header, index) => {
-                row[header] = values[index] || '';
-            });
-            students.push(row);
-        }
-
-        resultSpan.textContent = `Uploading ${students.length} records...`;
-        resultSpan.style.color = '#666';
-
-        const data = await apiRequest('/admin/students/import', {
-            method: 'POST',
-            body: JSON.stringify({ students })
-        });
-
-        resultSpan.textContent = `${data.message}`;
-        resultSpan.style.color = data.imported > 0 ? 'green' : 'orange';
-    } catch (error) {
-        resultSpan.textContent = error.message || 'Failed to upload CSV';
-        resultSpan.style.color = 'red';
-    }
-}
-
 // ==================== ADMIN FORM INIT ====================
 
 function initAdminForms() {
-    const venueForm = document.getElementById('venue-form');
-    if (venueForm) {
-        venueForm.addEventListener('submit', handleVenueForm);
-    }
-
     const adminBookingForm = document.getElementById('admin-booking-form');
     if (adminBookingForm) {
         adminBookingForm.addEventListener('submit', handleAdminBooking);
@@ -873,7 +706,7 @@ function downloadMonthlyPDF() {
     doc.autoTable({
         head: [headers],
         body: dataRows,
-startY: 52,
+        startY: 52,
         styles: { fontSize: 8, cellPadding: 3 },
         headStyles: { fillColor: [11, 31, 58], textColor: 255, fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [245, 247, 250] },
@@ -894,7 +727,7 @@ startY: 52,
                 doc.internal.pageSize.getHeight() - 8,
                 { align: 'right' }
             );
-doc.text('NMIMS BLR Sports Management System', 14, doc.internal.pageSize.getHeight() - 8);
+            doc.text('NMIMS BLR Sports Management System', 14, doc.internal.pageSize.getHeight() - 8);
         }
     });
 
@@ -903,6 +736,12 @@ doc.text('NMIMS BLR Sports Management System', 14, doc.internal.pageSize.getHeig
 }
 
 // ==================== UTILITY FUNCTIONS ====================
+
+function timeToMinutes(timeStr) {
+    if (!timeStr) return 0;
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + (minutes || 0);
+}
 
 function escapeHtml(text) {
     if (!text) return '';
@@ -947,11 +786,6 @@ function showAlert(message, type = 'info') {
 
 // Expose functions to global scope for inline onclick handlers
 window.cancelStudentBooking = cancelStudentBooking;
-window.showVenueForm = showVenueForm;
-window.hideVenueForm = hideVenueForm;
-window.editVenue = editVenue;
-window.toggleVenue = toggleVenue;
-window.deleteVenue = deleteVenue;
 window.filterAdminBookings = filterAdminBookings;
 window.cancelAdminBooking = cancelAdminBooking;
 window.cancelReportBooking = cancelReportBooking;

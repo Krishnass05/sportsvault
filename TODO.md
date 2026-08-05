@@ -1,9 +1,14 @@
-# TODO - Add Charts to Reports Tab
+# Task Todo
+
+## Goal
+1. Constrain admin venue bookings to between 10:00 AM and 7:00 PM.
+2. When an admin books a slot that overlaps an existing confirmed booking, auto-cancel the conflicting booking(s).
+3. Remove CSV upload option from admin dashboard.
+4. Remove venue edit/disable/delete management from admin dashboard.
 
 ## Steps
-
-- [x] 1. Add Chart.js CDN script to `frontend/html/reports.html`
-- [x] 2. Add "Booking Analytics" card with 4 chart canvases to `frontend/html/reports.html`
-- [x] 3. Add global `allBookings` storage and chart rendering functions to `frontend/js/reports.js`
-- [x] 4. Call chart rendering after data loads in `frontend/js/reports.js`
-- [x] 5. Test the reports page
+- [x] 1. `backend/utils/bookingValidation.js`: Enforce 10 AM–7 PM range for all roles (including admin).
+- [x] 2. `backend/controllers/bookingController.js`: Auto-cancel conflicting confirmed bookings when an admin creates a booking.
+- [x] 3. `frontend/js/dashboard.js`: Add 10 AM–7 PM validation to admin booking form; remove CSV upload + venue management functions.
+- [x] 4. `frontend/html/dashboard.html`: Remove CSV upload card and venue management card; add min/max time constraints on admin booking inputs.
+- [x] 5. Syntax-check backend files.
