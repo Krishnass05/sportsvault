@@ -2,6 +2,39 @@
 
 let allBookings = [];
 
+function getLocalDateString(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function getLocalMonthString(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+}
+
+function normalizeBookingDate(value) {
+    if (!value) return '';
+    const raw = String(value).trim();
+    if (!raw) return '';
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+        return raw;
+    }
+
+    const isoDate = new Date(raw);
+    if (!isNaN(isoDate.getTime())) {
+        const year = isoDate.getFullYear();
+        const month = String(isoDate.getMonth() + 1).padStart(2, '0');
+        const day = String(isoDate.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    return '';
+}
+
 // Load all initial data
 async function loadAllReports() {
     await Promise.all([
@@ -48,8 +81,10 @@ async function loadSummaryStats() {
         const activeVenues = (venuesData.venues || []).filter(v => v.is_active !== false);
         document.getElementById('active-venues-count').textContent = activeVenues.length;
 
-        const today = new Date().toISOString().split('T')[0];
-        const todayBookings = (bookingsData.bookings || []).filter(b => b.booking_date === today && b.status === 'confirmed');
+        const today = getLocalDateString();
+        const todayBookings = (bookingsData.bookings || []).filter(
+            b => normalizeBookingDate(b.booking_date) === today && b.status === 'confirmed'
+        );
         document.getElementById('today-bookings-count').textContent = todayBookings.length;
     } catch (error) {
         console.error('Failed to load summary stats:', error);
@@ -61,7 +96,7 @@ function setupReportMonth() {
     const monthInput = document.getElementById('report-month');
     if (monthInput) {
         const now = new Date();
-        monthInput.value = now.toISOString().slice(0, 7);
+        monthInput.value = getLocalMonthString(now);
     }
 }
 
@@ -411,6 +446,7 @@ function renderAnalyticsCharts() {
     }
 
     const confirmed = allBookings.filter(b => b.status === 'confirmed');
+    console.debug('Charts data payload', { confirmedCount: confirmed.length, sampleBookings: confirmed.slice(0, 5) });
 
     renderVenuePieChart(confirmed);
     renderWeekdayBarChart(confirmed);
@@ -473,7 +509,9 @@ function renderWeekdayBarChart(confirmed) {
     const counts = [0, 0, 0, 0, 0, 0, 0];
 
     confirmed.forEach(b => {
-        const d = new Date(b.booking_date + 'T00:00:00');
+        const normalizedDate = normalizeBookingDate(b.booking_date);
+        if (!normalizedDate) return;
+        const d = new Date(normalizedDate + 'T00:00:00');
         if (!isNaN(d)) counts[d.getDay()]++;
     });
 
@@ -511,14 +549,16 @@ function renderTrendLineChart(confirmed) {
     for (let i = 29; i >= 0; i--) {
         const d = new Date(today);
         d.setDate(d.getDate() - i);
-        const key = d.toISOString().split('T')[0];
+        const key = getLocalDateString(d);
         days.push(key);
         counts[key] = 0;
     }
 
     confirmed.forEach(b => {
-        if (counts.hasOwnProperty(b.booking_date)) {
-            counts[b.booking_date]++;
+        const normalizedDate = normalizeBookingDate(b.booking_date);
+        if (!normalizedDate) return;
+        if (Object.prototype.hasOwnProperty.call(counts, normalizedDate)) {
+            counts[normalizedDate]++;
         }
     });
 

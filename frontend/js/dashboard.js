@@ -2,6 +2,41 @@
 
 let allVenues = [];
 let allBookings = [];
+let adminBookingsFilter = 'all';
+let adminBookingsExpanded = false;
+
+function getLocalDateString(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function getLocalMonthString(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+}
+
+function normalizeBookingDate(value) {
+    if (!value) return '';
+    const raw = String(value).trim();
+    if (!raw) return '';
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+        return raw;
+    }
+
+    const isoDate = new Date(raw);
+    if (!isNaN(isoDate.getTime())) {
+        const year = isoDate.getFullYear();
+        const month = String(isoDate.getMonth() + 1).padStart(2, '0');
+        const day = String(isoDate.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    return '';
+}
 
 // ==================== INITIALIZATION ====================
 
@@ -120,10 +155,12 @@ async function loadAdminStats() {
         document.getElementById('admin-total-bookings').textContent = data.totalBookings || 0;
         document.getElementById('admin-total-students').textContent = data.totalStudents || 0;
 
-        // Get today's bookings
-        const today = new Date().toISOString().split('T')[0];
+        // Get today's bookings using the local date to avoid UTC shifts from ISO conversion.
+        const today = getLocalDateString();
         const bookingsData = await apiRequest('/bookings');
-        const todayBookings = (bookingsData.bookings || []).filter(b => b.booking_date === today && b.status === 'confirmed');
+        const todayBookings = (bookingsData.bookings || []).filter(
+            b => normalizeBookingDate(b.booking_date) === today && b.status === 'confirmed'
+        );
         document.getElementById('admin-today-bookings').textContent = todayBookings.length;
 
         // Get active venues
@@ -179,35 +216,35 @@ function renderAdminBookings(bookings) {
 
     if (bookings.length === 0) {
         container.innerHTML = '<div class="empty-state">No bookings found</div>';
-        return;
-    }
-
-    container.innerHTML = bookings.map(b => {
-        // Admin can cancel any confirmed booking (past or upcoming)
-        const canCancel = b.status === 'confirmed';
-        return `
-            <div class="booking-item ${b.status}">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
-                    <div>
-                        <h4>${escapeHtml(b.venue_name)}</h4>
-                        <p><strong>Booked by:</strong> ${escapeHtml(b.user_name)} (${escapeHtml(b.user_email)})</p>
-                        <p><strong>Date:</strong> ${formatDate(b.booking_date)} | <strong>Time:</strong> ${formatTime(b.start_time)} - ${formatTime(b.end_time)}</p>
-                        ${b.purpose ? `<p><strong>Purpose:</strong> ${escapeHtml(b.purpose)}</p>` : ''}
-                        ${b.approx_students ? `<p><strong>Approx Students:</strong> ${escapeHtml(b.approx_students)}</p>` : ''}
-                        <p><strong>Type:</strong> ${b.booking_type || 'student'}</p>
-                    </div>
-                    <div style="text-align: right;">
-                        <span class="badge ${b.status === 'confirmed' ? 'badge-success' : 'badge-secondary'}">${b.status}</span>
-                        <div style="margin-top: 0.5rem;">
-                            ${canCancel ? `
-                                <button class="btn btn-danger btn-sm" onclick="cancelAdminBooking(${b.id})">Cancel Booking</button>
-                            ` : ''}
+    } else {
+        container.innerHTML = bookings.map(b => {
+            const canCancel = b.status === 'confirmed';
+            return `
+                <div class="booking-item ${b.status}">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
+                        <div>
+                            <h4>${escapeHtml(b.venue_name)}</h4>
+                            <p><strong>Booked by:</strong> ${escapeHtml(b.user_name)} (${escapeHtml(b.user_email)})</p>
+                            <p><strong>Date:</strong> ${formatDate(b.booking_date)} | <strong>Time:</strong> ${formatTime(b.start_time)} - ${formatTime(b.end_time)}</p>
+                            ${b.purpose ? `<p><strong>Purpose:</strong> ${escapeHtml(b.purpose)}</p>` : ''}
+                            ${b.approx_students ? `<p><strong>Approx Students:</strong> ${escapeHtml(b.approx_students)}</p>` : ''}
+                            <p><strong>Type:</strong> ${b.booking_type || 'student'}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="badge ${b.status === 'confirmed' ? 'badge-success' : 'badge-secondary'}">${b.status}</span>
+                            <div style="margin-top: 0.5rem;">
+                                ${canCancel ? `
+                                    <button class="btn btn-danger btn-sm" onclick="cancelAdminBooking(${b.id})">Cancel Booking</button>
+                                ` : ''}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
+    }
+
+    updateAdminBookingsListUI();
 }
 
 // ==================== ANALYTICS CHARTS ====================
@@ -230,6 +267,7 @@ function renderAnalyticsCharts() {
     }
 
     const confirmed = allBookings.filter(b => b.status === 'confirmed');
+    console.debug('Analytics chart payload', { confirmedCount: confirmed.length, sampleBookings: confirmed.slice(0, 5) });
 
     renderVenuePieChart(confirmed);
     renderWeekdayBarChart(confirmed);
@@ -292,7 +330,9 @@ function renderWeekdayBarChart(confirmed) {
     const counts = [0, 0, 0, 0, 0, 0, 0];
 
     confirmed.forEach(b => {
-        const d = new Date(b.booking_date + 'T00:00:00');
+        const normalizedDate = normalizeBookingDate(b.booking_date);
+        if (!normalizedDate) return;
+        const d = new Date(normalizedDate + 'T00:00:00');
         if (!isNaN(d)) counts[d.getDay()]++;
     });
 
@@ -330,14 +370,16 @@ function renderTrendLineChart(confirmed) {
     for (let i = 29; i >= 0; i--) {
         const d = new Date(today);
         d.setDate(d.getDate() - i);
-        const key = d.toISOString().split('T')[0];
+        const key = getLocalDateString(d);
         days.push(key);
         counts[key] = 0;
     }
 
     confirmed.forEach(b => {
-        if (counts.hasOwnProperty(b.booking_date)) {
-            counts[b.booking_date]++;
+        const normalizedDate = normalizeBookingDate(b.booking_date);
+        if (!normalizedDate) return;
+        if (Object.prototype.hasOwnProperty.call(counts, normalizedDate)) {
+            counts[normalizedDate]++;
         }
     });
 
@@ -404,12 +446,34 @@ function renderTypePieChart(confirmed) {
     });
 }
 
+function updateAdminBookingsListUI() {
+    const summary = document.getElementById('admin-bookings-summary');
+    const toggle = document.getElementById('admin-bookings-toggle');
+    const container = document.getElementById('admin-bookings-container');
+    if (!summary || !toggle || !container) return;
+
+    const visibleBookings = adminBookingsFilter === 'all'
+        ? allBookings
+        : allBookings.filter(b => b.status === adminBookingsFilter);
+
+    const count = visibleBookings.length;
+    summary.textContent = `${count} booking${count === 1 ? '' : 's'}`;
+    toggle.textContent = adminBookingsExpanded ? 'Hide Bookings' : 'Show Bookings';
+    toggle.setAttribute('aria-expanded', String(adminBookingsExpanded));
+    container.style.display = adminBookingsExpanded ? 'block' : 'none';
+}
+
+function toggleAdminBookingsList() {
+    adminBookingsExpanded = !adminBookingsExpanded;
+    updateAdminBookingsListUI();
+}
+
 function filterAdminBookings(filter) {
-    if (filter === 'all') {
-        renderAdminBookings(allBookings);
-    } else {
-        renderAdminBookings(allBookings.filter(b => b.status === filter));
-    }
+    adminBookingsFilter = filter;
+    const filteredBookings = filter === 'all'
+        ? allBookings
+        : allBookings.filter(b => b.status === filter);
+    renderAdminBookings(filteredBookings);
 }
 
 async function cancelAdminBooking(bookingId) {
@@ -505,10 +569,10 @@ function initAdminForms() {
     if (adminBookingForm) {
         adminBookingForm.addEventListener('submit', handleAdminBooking);
 
-        // Set min date for admin booking
+        // Set min date for admin booking using local time to avoid UTC date drift.
         const dateInput = document.getElementById('admin-booking-date');
         if (dateInput) {
-            dateInput.setAttribute('min', new Date().toISOString().split('T')[0]);
+            dateInput.setAttribute('min', getLocalDateString());
         }
     }
 }
@@ -519,7 +583,7 @@ function setupReportMonth() {
     const monthInput = document.getElementById('report-month');
     if (monthInput) {
         const now = new Date();
-        monthInput.value = now.toISOString().slice(0, 7);
+        monthInput.value = getLocalMonthString(now);
     }
 }
 

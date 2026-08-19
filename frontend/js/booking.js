@@ -4,6 +4,13 @@ let allBookings = [];
 let venues = [];
 let availableSlots = [];
 
+function getLocalDateString(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 // Load all venues
 async function loadVenues() {
     try {
@@ -394,11 +401,10 @@ document.addEventListener('DOMContentLoaded', () => {
     loadVenues();
     loadBookings();
 
-    // Set minimum date to today
+    // Set minimum date to today in local time to avoid UTC date drift.
     const dateInput = document.getElementById('booking-date');
     if (dateInput) {
-        const today = new Date().toISOString().split('T')[0];
-        dateInput.setAttribute('min', today);
+        dateInput.setAttribute('min', getLocalDateString());
 
         // Load slots when date changes
         dateInput.addEventListener('change', loadAvailableSlots);
