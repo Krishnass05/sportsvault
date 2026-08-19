@@ -125,14 +125,18 @@
 
                 <!-- All Bookings -->
                 <div style="margin-bottom: 1rem;">
-                    <h3 class="card-title">All Bookings</h3>
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                        <h3 class="card-title" style="margin-bottom: 0;">All Bookings</h3>
+                        <button id="admin-bookings-toggle" type="button" class="btn btn-sm btn-secondary" aria-expanded="false" onclick="toggleAdminBookingsList()">Show Bookings</button>
+                    </div>
+                    <div id="admin-bookings-summary" style="margin-top: 0.75rem; color: #666; font-size: 0.9rem;">0 bookings</div>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem;">
                         <button class="btn btn-sm" onclick="filterAdminBookings('all')">All</button>
                         <button class="btn btn-sm" onclick="filterAdminBookings('confirmed')">Confirmed</button>
                         <button class="btn btn-sm" onclick="filterAdminBookings('cancelled')">Cancelled</button>
                     </div>
                 </div>
-<div id="admin-bookings-container" class="booking-timeline">
+                <div id="admin-bookings-container" class="booking-timeline" style="display: none;">
                     <div class="empty-state">Loading bookings...</div>
                 </div>
             </div>

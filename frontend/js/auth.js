@@ -1,9 +1,12 @@
 // SportVault Authentication Module
 
-// Use relative /api paths.
-// - Local dev: Express serves frontend + backend on localhost:3000, so /api hits the same server.
-// - Production (Vercel): vercel.json rewrites /api/* to the Render backend.
-const API_BASE_URL = 'https://sportsvault-api.onrender.com/api';
+// Use same-origin /api in local dev so the frontend talks to the server it is running on.
+// Fall back to the Render backend only for deployed production builds.
+const API_BASE_URL = (() => {
+    const hostname = window.location.hostname;
+    const isLocalDev = hostname === 'localhost' || hostname === '127.0.0.1';
+    return isLocalDev ? `${window.location.origin}/api` : 'https://sportsvault-api.onrender.com/api';
+})();
 
 
 // Check if user is authenticated
