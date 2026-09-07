@@ -23,3 +23,9 @@ services:
         value: "true"
       - key: JWT_SECRET
         sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        value: NMIMS Blr Sports Arena
+      - key: EMAIL_FROM_ADDRESS
+        value: no-reply@nmimsblrsportsarena.in
