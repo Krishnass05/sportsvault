@@ -10,11 +10,11 @@ services:
     startCommand: node server.js
     envVars:
       - key: DB_HOST
-        value: db.ubzcciloddftlpvfukln.supabase.co
+        value: aws-0-ap-southeast-2.pooler.supabase.com
       - key: DB_PORT
         value: "5432"
       - key: DB_USER
-        value: postgres
+        value: postgres.hkrknqxvahgsbncbiqzj
       - key: DB_PASSWORD
         sync: false
       - key: DB_NAME
