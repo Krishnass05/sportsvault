@@ -1,34 +1,18 @@
 // SportVault Email Notification Service
-// Uses Nodemailer with SMTP (Gmail compatible) configuration from .env
-// Falls back to console.log if SMTP is not configured, so the app never breaks.
+// Uses Resend for transactional email delivery, configured from .env.
+// Falls back to console.log if Resend is not configured, so the app never breaks.
 
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-// Build transporter from environment variables
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587', 10),
-    secure: (process.env.SMTP_SECURE || 'false') === 'true',
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-    },
-    family: 4,          // ← ADD THIS LINE
-    pool: true,
-    maxConnections: 3,
-    maxMessages: 50,
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 20000
-});
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-const fromAddress = process.env.EMAIL_FROM
-    ? `"${process.env.EMAIL_FROM}" <${process.env.SMTP_USER}>`
-    : `"SportVault" <${process.env.SMTP_USER || 'no-reply@sportvault.com'}>`;
+const fromAddress = process.env.EMAIL_FROM_ADDRESS
+    ? `"${process.env.EMAIL_FROM || 'SportVault'}" <${process.env.EMAIL_FROM_ADDRESS}>`
+    : `"${process.env.EMAIL_FROM || 'SportVault'}" <no-reply@sportvault.com>`;
 
 /**
  * Core send function.
- * If SMTP is not configured, logs the email instead of throwing.
+ * If Resend is not configured, logs the email instead of throwing.
  */
 async function sendMail(to, subject, html) {
     if (!to) {
@@ -36,20 +20,24 @@ async function sendMail(to, subject, html) {
         return { skipped: true };
     }
 
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-        console.log(`[Email] SMTP not configured. Would send to ${to} - ${subject}`);
+    if (!resend) {
+        console.log(`[Email] Resend not configured. Would send to ${to} - ${subject}`);
         return { skipped: true };
     }
 
     try {
-        const info = await transporter.sendMail({
+        const { data, error } = await resend.emails.send({
             from: fromAddress,
             to,
             subject,
             html
         });
-        console.log(`[Email] Sent to ${to}: "${subject}" (messageId: ${info.messageId})`);
-        return info;
+        if (error) {
+            console.error('[Email] Failed to send email:', error.message || error);
+            return { error: error.message || error };
+        }
+        console.log(`[Email] Sent to ${to}: "${subject}" (id: ${data.id})`);
+        return data;
     } catch (error) {
         console.error('[Email] Failed to send email:', error.message);
         return { error: error.message };
