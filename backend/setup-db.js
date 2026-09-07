@@ -96,6 +96,15 @@ const setupDatabase = async () => {
                 notes TEXT,
                 FOREIGN KEY (equipment_id) REFERENCES equipment(id) ON DELETE CASCADE,
                 FOREIGN KEY (reported_by) REFERENCES users(id) ON DELETE CASCADE
+            )`,
+            `CREATE TABLE IF NOT EXISTS password_reset_otps (
+                id BIGSERIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                otp_hash VARCHAR(255) NOT NULL,
+                expires_at TIMESTAMPTZ NOT NULL,
+                attempts INT NOT NULL DEFAULT 0,
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )`
         ];
 

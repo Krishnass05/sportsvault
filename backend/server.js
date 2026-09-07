@@ -52,6 +52,10 @@ app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/html/register.html'));
 });
 
+app.get('/forgot-password', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/html/forgot-password.html'));
+});
+
 app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/html/dashboard.html'));
 });
