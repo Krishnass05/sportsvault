@@ -10,7 +10,7 @@ services:
     startCommand: node server.js
     envVars:
       - key: DB_HOST
-        value: db.ubzcciloddftlpvfukln.supabase.co
+        value: db.hkrknqxvahgsbncbiqzj.supabase.co
       - key: DB_PORT
         value: "5432"
       - key: DB_USER
