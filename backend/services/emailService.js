@@ -171,6 +171,36 @@ async function sendWelcomeEmail(recipientEmail, studentName) {
     return sendMail(recipientEmail, subject, html);
 }
 
+// ---------- Password Reset OTP Email ----------
+
+/**
+ * Send a password reset OTP code.
+ */
+async function sendPasswordResetOtp(recipientEmail, studentName, otp) {
+    const subject = `🔐 Your SportVault Password Reset Code`;
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #0B1F3A; color: #ffffff; padding: 1.5rem; text-align: center;">
+                <h1 style="margin: 0; font-size: 1.5rem;">SportVault</h1>
+                <p style="margin: 0.25rem 0 0 0; opacity: 0.9;">Password Reset Request</p>
+            </div>
+            <div style="padding: 1.5rem; background-color: #ffffff;">
+                <p>Dear <strong>${escapeHtml(studentName)}</strong>,</p>
+                <p>Use the code below to reset your SportVault password. This code expires in 10 minutes.</p>
+                <p style="text-align: center; margin: 1.5rem 0;">
+                    <span style="display: inline-block; font-size: 2rem; letter-spacing: 0.5rem; font-weight: bold; color: #0B1F3A; background-color: #f5f5f5; padding: 0.75rem 1.5rem; border-radius: 8px;">${escapeHtml(otp)}</span>
+                </p>
+                <p>If you did not request a password reset, you can safely ignore this email - your password will not be changed.</p>
+            </div>
+            <div style="background-color: #f5f5f5; padding: 1rem; text-align: center; color: #666; font-size: 0.85rem;">
+                <p style="margin: 0;">This is an automated notification - please do not reply to this email.</p>
+            </div>
+        </div>
+    `;
+
+    return sendMail(recipientEmail, subject, html);
+}
+
 // ---------- Helpers ----------
 
 function formatDateForEmail(dateInput) {
@@ -216,6 +246,7 @@ module.exports = {
     sendBookingConfirmation,
     sendBookingCancellation,
     sendWelcomeEmail,
+    sendPasswordResetOtp,
     sendMail
 };
 
