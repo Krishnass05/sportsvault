@@ -175,6 +175,17 @@ function buildDownloadBaseName() {
     return `booking_report_${month}`;
 }
 
+// Neutralizes CSV formula injection: a cell starting with =, +, -, or @ gets
+// interpreted as a formula by Excel/Sheets when the file is opened. Prefixing
+// it with a single quote forces those apps to treat it as plain text.
+function sanitizeCsvCell(value) {
+    const str = String(value);
+    if (/^[=+\-@]/.test(str)) {
+        return `'${str}`;
+    }
+    return str;
+}
+
 // Download monthly report as CSV
 function downloadMonthlyCSV() {
     const tbody = document.getElementById('report-bookings-tbody');
@@ -213,7 +224,7 @@ const cells = row.querySelectorAll('td');
 
     const csvContent = [
         headers.join(','),
-        ...dataRows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+        ...dataRows.map(row => row.map(cell => `"${sanitizeCsvCell(cell).replace(/"/g, '""')}"`).join(','))
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

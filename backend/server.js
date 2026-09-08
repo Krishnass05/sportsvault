@@ -1,16 +1,42 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const path = require('path');
 require('dotenv').config();
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
+const { apiLimiter } = require('./middleware/rateLimiter');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust Render/Vercel's proxy so req.ip (used by rate limiting) reflects the
+// real client IP instead of the proxy's
+app.set('trust proxy', 1);
+
+// Only these origins may make cross-origin requests to the API
+const allowedOrigins = [
+    'https://sportsvault-rho.vercel.app',
+    'http://localhost:3000'
+];
+
 // Middleware
-app.use(cors());
+// CSP is disabled - the frontend relies on inline <script> blocks across its
+// HTML pages, which a default CSP would silently block
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow non-browser requests (curl, server-to-server, health checks)
+        // that don't send an Origin header at all
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    }
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/api', apiLimiter);
 
 // Serve static files from frontend
 // Disable caching so updated JS/CSS are always served fresh during development

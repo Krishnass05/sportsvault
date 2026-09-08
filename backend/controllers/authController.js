@@ -18,6 +18,10 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
+        if (password.length < 6) {
+            return res.status(400).json({ message: 'Password must be at least 6 characters' });
+        }
+
         // Check if student_id exists in student_ids table
         const { rows: studentIdRows } = await db.query(
             'SELECT * FROM student_ids WHERE student_id = $1',
