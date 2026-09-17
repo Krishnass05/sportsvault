@@ -728,3 +728,364 @@ body {
     font-size: 0.75rem;
     margin-top: 0.25rem;
 }
+
+/* ==========================================================================
+   Arena design system — auth pages (login / register / forgot-password)
+   Palette sampled directly from the NMIMS Blr Sports Arena courts photo:
+   the pickleball-court blue, the coral run-off, the turf green.
+   Scoped entirely under .arena-page so it cannot affect any other page.
+   ========================================================================== */
+.arena-page {
+    --arena-ink: #16211A;
+    --arena-paper: #FBFAF7;
+    --arena-blue: #2F6FA8;
+    --arena-blue-tint: #7CB2E0;
+    --arena-green: #4A5A38;
+    --arena-green-bright: #7C9A4E;
+    --arena-coral: #E15A5F;
+    --arena-line: #FFFFFF;
+    --arena-border: rgba(22, 33, 26, 0.12);
+
+    font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--arena-paper);
+    color: var(--arena-ink);
+}
+
+.arena-layout {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+}
+
+.arena-hero {
+    position: relative;
+    background-image: url('../img/courts-hero.jpg');
+    background-size: cover;
+    background-position: center center;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 3rem;
+    overflow: hidden;
+}
+
+.arena-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(15, 25, 20, 0.05) 0%, rgba(10, 18, 14, 0.82) 100%);
+}
+
+.arena-hero-content {
+    position: relative;
+    z-index: 1;
+    color: var(--arena-line);
+    max-width: 30rem;
+}
+
+.arena-eyebrow {
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--arena-blue-tint);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.1rem;
+}
+
+.arena-eyebrow::before {
+    content: '';
+    width: 26px;
+    height: 2px;
+    background: var(--arena-coral);
+    flex-shrink: 0;
+}
+
+.arena-hero-title {
+    font-family: 'Big Shoulders Display', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.5rem, 4.6vw, 4.25rem);
+    line-height: 0.92;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    margin-bottom: 1.1rem;
+}
+
+.arena-hero-title span {
+    color: var(--arena-blue-tint);
+}
+
+.arena-hero-sub {
+    font-size: 1rem;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.82);
+    max-width: 24rem;
+}
+
+.arena-hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.75rem;
+}
+
+.arena-tag {
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    border-radius: 2px;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+/* Form panel */
+.arena-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 2rem;
+}
+
+.arena-form-wrap {
+    width: 100%;
+    max-width: 23rem;
+    position: relative;
+}
+
+/* Court-corner motif: the signature element. Thin bracket marks that echo
+   the painted corner lines of a real court, framing the form. */
+.arena-form-wrap::before,
+.arena-form-wrap::after {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-top: 2px solid var(--arena-blue);
+    border-left: 2px solid var(--arena-blue);
+    top: -14px;
+    left: -14px;
+}
+
+.arena-form-wrap::after {
+    top: auto;
+    left: auto;
+    bottom: -14px;
+    right: -14px;
+    border-top: none;
+    border-left: none;
+    border-bottom: 2px solid var(--arena-coral);
+    border-right: 2px solid var(--arena-coral);
+}
+
+.arena-brand {
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--arena-green);
+    margin-bottom: 0.6rem;
+}
+
+.arena-form-title {
+    font-family: 'Big Shoulders Display', sans-serif;
+    font-weight: 800;
+    font-size: 2.4rem;
+    text-transform: uppercase;
+    line-height: 1;
+    margin-bottom: 0.4rem;
+}
+
+.arena-form-sub {
+    color: rgba(22, 33, 26, 0.62);
+    font-size: 0.92rem;
+    margin-bottom: 1.75rem;
+}
+
+.arena-page .form-group {
+    margin-bottom: 1.15rem;
+}
+
+.arena-page .form-label {
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--arena-green);
+    margin-bottom: 0.45rem;
+}
+
+.arena-page .form-control {
+    background: #fff;
+    border: 1.5px solid var(--arena-border);
+    border-radius: 4px;
+    padding: 0.8rem 0.9rem;
+    font-family: 'Work Sans', sans-serif;
+    font-size: 0.98rem;
+    color: var(--arena-ink);
+}
+
+.arena-page .form-control::placeholder {
+    color: rgba(22, 33, 26, 0.35);
+}
+
+.arena-page .form-control:focus {
+    border-color: var(--arena-blue);
+    box-shadow: 0 0 0 3px rgba(47, 111, 168, 0.15);
+}
+
+.arena-page .btn-primary {
+    background: var(--arena-ink);
+    border-radius: 4px;
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.85rem 1.5rem;
+}
+
+.arena-page .btn-primary:hover {
+    background: var(--arena-blue);
+}
+
+.arena-page .btn-secondary {
+    background: transparent;
+    border: 1.5px solid var(--arena-border);
+    color: var(--arena-ink);
+    border-radius: 4px;
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.85rem 1.5rem;
+}
+
+.arena-page .btn-secondary:hover {
+    background: var(--arena-paper);
+    border-color: var(--arena-green);
+}
+
+.arena-page .auth-footer {
+    text-align: left;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--arena-border);
+    font-size: 0.9rem;
+}
+
+.arena-page .auth-footer p {
+    margin-bottom: 0.4rem;
+    color: rgba(22, 33, 26, 0.7);
+}
+
+.arena-page .auth-footer p:last-child {
+    margin-bottom: 0;
+}
+
+.arena-page .auth-footer a {
+    color: var(--arena-blue);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.arena-page .auth-footer a:hover {
+    text-decoration: underline;
+}
+
+.arena-page .alert {
+    border-radius: 4px;
+    font-size: 0.9rem;
+    border-left: 3px solid transparent;
+}
+
+.arena-page .alert-danger {
+    background: #FDEEEE;
+    border-left-color: var(--arena-coral);
+    color: #8A2E32;
+}
+
+.arena-page .alert-success {
+    background: #EFF3E9;
+    border-left-color: var(--arena-green-bright);
+    color: #3D4A2E;
+}
+
+.arena-page .credits {
+    background: var(--arena-ink);
+    padding: 1.5rem 1rem;
+}
+
+.arena-page .credits h3 {
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.arena-page .credits p {
+    font-size: 0.82rem;
+}
+
+.arena-page .credits .credits-divider {
+    background: var(--arena-coral);
+}
+
+.arena-page .credits a {
+    color: var(--arena-blue-tint);
+}
+
+@media (max-width: 900px) {
+    .arena-layout {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+
+    .arena-hero {
+        min-height: 40vh;
+        padding: 2rem 1.5rem;
+        background-image: url('../img/courts-hero-mobile.jpg');
+        background-position: center center;
+    }
+
+    .arena-hero-title {
+        font-size: clamp(2.25rem, 9vw, 3rem);
+    }
+
+    .arena-hero-sub {
+        display: none;
+    }
+
+    .arena-panel {
+        padding: 2.5rem 1.5rem 3rem;
+    }
+
+    .arena-form-wrap::before,
+    .arena-form-wrap::after {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+@media (max-width: 420px) {
+    .arena-hero {
+        min-height: 32vh;
+        padding: 1.5rem 1.25rem;
+    }
+
+    .arena-hero-tags {
+        display: none;
+    }
+
+    .arena-panel {
+        padding: 2rem 1.25rem 2.5rem;
+    }
+}
