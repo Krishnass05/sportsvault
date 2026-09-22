@@ -547,6 +547,11 @@ async function handleAdminBooking(event) {
         return;
     }
 
+    if (isBlockedSaturday(formData.booking_date)) {
+        showAlert('Bookings are not allowed on the 1st and 3rd Saturday of the month (facility closed for maintenance).', 'warning');
+        return;
+    }
+
     try {
         await apiRequest('/bookings', {
             method: 'POST',
@@ -805,6 +810,16 @@ function timeToMinutes(timeStr) {
     if (!timeStr) return 0;
     const [hours, minutes] = timeStr.split(':').map(Number);
     return hours * 60 + (minutes || 0);
+}
+
+// True if the given YYYY-MM-DD date falls on the 1st or 3rd Saturday of its
+// month - mirrors the same check enforced server-side.
+function isBlockedSaturday(dateStr) {
+    if (!dateStr) return false;
+    const d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d.getTime()) || d.getDay() !== 6) return false;
+    const occurrence = Math.ceil(d.getDate() / 7);
+    return occurrence === 1 || occurrence === 3;
 }
 
 function escapeHtml(text) {
