@@ -4,35 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - SportVault</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=IBM+Plex+Mono:wght@500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/styles.css">
 </head>
-<body>
-    <div class="auth-container">
-        <div class="auth-card">
-            <div class="auth-header">
-                <h1>SportVault</h1>
-                <p>Sports Equipment & Venue Management System</p>
+<body class="arena-page">
+    <div class="arena-layout">
+        <div class="arena-hero">
+            <div class="arena-hero-content">
+                <p class="arena-eyebrow">NMIMS Blr Sports Arena</p>
+                <h1 class="arena-hero-title">Book Your<br><span>Court.</span></h1>
+                <p class="arena-hero-sub">Pickleball, basketball, badminton, cricket and football turfs &mdash; issue equipment and reserve your slot in one place.</p>
+                <div class="arena-hero-tags">
+                    <span class="arena-tag">Pickleball</span>
+                    <span class="arena-tag">Basketball</span>
+                    <span class="arena-tag">Cricket Turf</span>
+                    <span class="arena-tag">Badminton</span>
+                </div>
             </div>
+        </div>
 
-            <div id="error-message" class="alert alert-danger hidden"></div>
+        <div class="arena-panel">
+            <div class="arena-form-wrap">
+                <p class="arena-brand">SportVault</p>
+                <h2 class="arena-form-title">Log In</h2>
+                <p class="arena-form-sub">Enter your campus credentials to continue.</p>
 
-            <form id="login-form">
-                <div class="form-group">
-                    <label class="form-label" for="email">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" required placeholder="Enter your email">
+                <div id="error-message" class="alert alert-danger hidden"></div>
+
+                <form id="login-form">
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required placeholder="Enter your email">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required placeholder="Enter your password">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">Log In</button>
+                </form>
+
+                <div class="auth-footer">
+                    <p><a href="/forgot-password">Forgot password?</a></p>
+                    <p>Don't have an account? <a href="/register">Register here</a></p>
                 </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="password">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" required placeholder="Enter your password">
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-block">Login</button>
-            </form>
-
-<div class="auth-footer">
-                <p><a href="/forgot-password">Forgot password?</a></p>
-                <p>Don't have an account? <a href="/register">Register here</a></p>
             </div>
         </div>
     </div>

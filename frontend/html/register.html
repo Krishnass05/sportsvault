@@ -4,55 +4,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - SportVault</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=IBM+Plex+Mono:wght@500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/styles.css">
 </head>
-<body>
-    <div class="auth-container">
-        <div class="auth-card">
-            <div class="auth-header">
-                <h1>SportVault</h1>
-                <p>Student Registration</p>
+<body class="arena-page">
+    <div class="arena-layout">
+        <div class="arena-hero">
+            <div class="arena-hero-content">
+                <p class="arena-eyebrow">NMIMS Blr Sports Arena</p>
+                <h1 class="arena-hero-title">Join The<br><span>Arena.</span></h1>
+                <p class="arena-hero-sub">Register with the Student ID your sports office issued you, then start booking courts and checking out equipment.</p>
+                <div class="arena-hero-tags">
+                    <span class="arena-tag">Pickleball</span>
+                    <span class="arena-tag">Basketball</span>
+                    <span class="arena-tag">Cricket Turf</span>
+                    <span class="arena-tag">Badminton</span>
+                </div>
             </div>
+        </div>
 
-            <div id="error-message" class="alert alert-danger hidden"></div>
+        <div class="arena-panel">
+            <div class="arena-form-wrap">
+                <p class="arena-brand">SportVault</p>
+                <h2 class="arena-form-title">Register</h2>
+                <p class="arena-form-sub">Fill in your details to create your account.</p>
 
-            <form id="register-form">
-                <div class="form-group">
-                    <label class="form-label" for="studentId">Student ID</label>
-                    <input type="text" class="form-control" id="studentId" name="studentId" required placeholder="Enter your Student ID (provided by admin)">
-                    <small style="color: #666;">Student ID must be created by admin first</small>
+                <div id="error-message" class="alert alert-danger hidden"></div>
+
+                <form id="register-form">
+                    <div class="form-group">
+                        <label class="form-label" for="studentId">Student ID</label>
+                        <input type="text" class="form-control" id="studentId" name="studentId" required placeholder="Enter your Student ID (provided by admin)">
+                        <small style="color: #666;">Student ID must be created by admin first</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="name">Full Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required placeholder="Enter your full name">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="school">School</label>
+                        <input type="text" class="form-control" id="school" name="school" required placeholder="Enter your school name">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required placeholder="Enter your email">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required placeholder="Create a password (min 6 characters)">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="confirmPassword">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">Register</button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="/login">Login here</a></p>
                 </div>
-
-<div class="form-group">
-                    <label class="form-label" for="name">Full Name</label>
-                    <input type="text" class="form-control" id="name" name="name" required placeholder="Enter your full name">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="school">School</label>
-                    <input type="text" class="form-control" id="school" name="school" required placeholder="Enter your school name">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="email">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" required placeholder="Enter your email">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="password">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" required placeholder="Create a password (min 6 characters)">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="confirmPassword">Confirm Password</label>
-                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-block">Register</button>
-            </form>
-
-            <div class="auth-footer">
-                <p>Already have an account? <a href="/login">Login here</a></p>
             </div>
         </div>
     </div>
