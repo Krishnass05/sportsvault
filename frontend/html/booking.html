@@ -70,12 +70,16 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label" for="booking-start-time">Start Time</label>
-                            <input type="time" class="form-control" id="booking-start-time" min="10:00" max="18:00" required>
+                            <select class="form-control" id="booking-start-time" required>
+                                <option value="">Select start time</option>
+                            </select>
                             <small style="color: #666;">Available: 10:00 AM - 7:00 PM (Max 2 hours)</small>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="booking-end-time">End Time</label>
-                            <input type="time" class="form-control" id="booking-end-time" min="10:00" max="19:00" required>
+                            <select class="form-control" id="booking-end-time" required>
+                                <option value="">Select end time</option>
+                            </select>
                         </div>
                     </div>
                     <div class="form-group">

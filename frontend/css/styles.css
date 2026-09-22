@@ -25,6 +25,20 @@ body {
     line-height: 1.6;
 }
 
+/* Subtle court-photo backdrop on the inner (non-arena) pages, fixed to the viewport
+   via a positioned pseudo-element rather than background-attachment:fixed, so it
+   doesn't get stretched to the page's full scroll height on long dashboards. */
+body:not(.arena-page)::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image: linear-gradient(rgba(245, 245, 245, 0.93), rgba(245, 245, 245, 0.93)), url('../img/courts-navbar.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
 /* Navbar */
 .navbar {
     background-color: var(--color-navy);
@@ -56,14 +70,14 @@ body {
 }
 
 .navbar-logo {
-    height: 22px;
+    height: 32px;
     width: auto;
     display: block;
 }
 
 .navbar-brand-text {
     font-family: 'Big Shoulders Display', sans-serif;
-    font-size: 0.95rem;
+    font-size: 0.75rem;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -128,6 +142,28 @@ body {
     font-size: 1.25rem;
     font-weight: 600;
     color: var(--color-navy);
+}
+
+/* Venue photo cards */
+.venue-info-item {
+    border-bottom: 1px solid #e0e0e0;
+    overflow: hidden;
+}
+
+.venue-info-item:last-child {
+    border-bottom: none;
+}
+
+.venue-photo {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+    border-radius: 4px;
+}
+
+.venue-info-body {
+    padding: 1rem;
 }
 
 /* Stats Grid */
@@ -549,6 +585,11 @@ body {
 
     .container {
         padding: 1rem;
+    }
+
+    /* Serve the smaller, pre-cropped mobile image instead of the desktop navbar strip */
+    body:not(.arena-page)::before {
+        background-image: linear-gradient(rgba(245, 245, 245, 0.93), rgba(245, 245, 245, 0.93)), url('../img/courts-hero-mobile.jpg');
     }
 
     .stats-grid {
