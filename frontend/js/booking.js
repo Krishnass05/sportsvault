@@ -160,15 +160,20 @@ async function loadAvailableSlots() {
     try {
         const data = await apiRequest(`/bookings/available-slots?venue_id=${venueId}&date=${date}`);
         availableSlots = data.slots || [];
-        renderSlots(availableSlots);
+        renderSlots(availableSlots, data);
     } catch (error) {
         console.error('Failed to load slots:', error);
     }
 }
 
-function renderSlots(slots) {
+function renderSlots(slots, meta = {}) {
     const container = document.getElementById('slots-container');
     if (!container) return;
+
+    if (meta.blocked) {
+        container.innerHTML = `<p style="color: #721c24; padding: 1rem; background-color: #f8d7da; border-radius: 4px;">${escapeHtml(meta.blockedReason || 'This date is closed for booking.')}</p>`;
+        return;
+    }
 
     if (!slots || slots.length === 0) {
         container.innerHTML = '<p style="color: #666; padding: 1rem;">No slots available for this date</p>';
@@ -183,7 +188,10 @@ function renderSlots(slots) {
         const isBooked = !slot.available;
         const reason = slot.reason || 'Booked';
         html += `
-            <div style="
+            <div
+            data-start="${slot.start}"
+            data-end="${slot.end}"
+            style="
                 padding: 0.5rem 0.75rem;
                 border-radius: 4px;
                 font-size: 0.85rem;
@@ -197,7 +205,7 @@ function renderSlots(slots) {
             "
             onclick="${isBooked ? '' : `selectSlot('${slot.start}', '${slot.end}')`}"
             title="${isBooked ? reason : 'Click to select this slot'}">
-                ${slot.start} - ${slot.end}
+                ${formatTime(slot.start)} - ${formatTime(slot.end)}
                 ${isBooked ? `<br><small>${reason}</small>` : '<br><small>Available</small>'}
             </div>
         `;
@@ -212,9 +220,9 @@ function selectSlot(start, end) {
     document.getElementById('booking-end-time').value = end;
 
     // Highlight selected slot
-    const allSlotDivs = document.getElementById('slots-container').querySelectorAll('div[style*="cursor: pointer"]');
+    const allSlotDivs = document.getElementById('slots-container').querySelectorAll('div[data-start]');
     allSlotDivs.forEach(div => {
-        if (div.textContent.includes(`${start} - ${end}`)) {
+        if (div.dataset.start === start && div.dataset.end === end) {
             div.style.outline = '2px solid #0B1F3A';
             div.style.transform = 'scale(1.05)';
         } else {
@@ -292,6 +300,13 @@ async function createBooking(event) {
         return;
     }
 
+    if (isBlockedSaturday(formData.booking_date)) {
+        showAlert('Bookings are not allowed on the 1st and 3rd Saturday of the month (facility closed for maintenance).', 'warning');
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        return;
+    }
+
     try {
         const result = await apiRequest('/bookings', {
             method: 'POST',
@@ -351,6 +366,16 @@ function timeToMinutes(timeStr) {
     if (!timeStr) return 0;
     const [hours, minutes] = timeStr.split(':').map(Number);
     return hours * 60 + (minutes || 0);
+}
+
+// True if the given YYYY-MM-DD date falls on the 1st or 3rd Saturday of its
+// month - mirrors the same check enforced server-side.
+function isBlockedSaturday(dateStr) {
+    if (!dateStr) return false;
+    const d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d.getTime()) || d.getDay() !== 6) return false;
+    const occurrence = Math.ceil(d.getDate() / 7);
+    return occurrence === 1 || occurrence === 3;
 }
 
 function escapeHtml(text) {

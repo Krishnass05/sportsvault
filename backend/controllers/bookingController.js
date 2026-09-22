@@ -6,7 +6,9 @@ const {
     normalizeTime,
     parseTimeToMinutes,
     BOOKING_START_HOUR,
-    BOOKING_END_HOUR
+    BOOKING_END_HOUR,
+    BLOCKED_SATURDAY_MESSAGE,
+    isBlockedSaturday
 } = require('../utils/bookingValidation');
 const emailService = require('../services/emailService');
 
@@ -85,6 +87,10 @@ exports.createBooking = async (req, res) => {
         }
         if (!venueCheck.active) {
             return res.status(400).json({ message: 'This venue is currently unavailable for booking' });
+        }
+
+        if (isBlockedSaturday(booking_date)) {
+            return res.status(400).json({ message: BLOCKED_SATURDAY_MESSAGE });
         }
 
         const timeValidation = validateBookingTimes(start_time, end_time, { isAdmin });
@@ -269,6 +275,15 @@ exports.getAvailableSlots = async (req, res) => {
                 slots: [],
                 operatingHours: { start: '10:00', end: '19:00' },
                 venueInactive: true
+            });
+        }
+
+        if (isBlockedSaturday(date)) {
+            return res.json({
+                slots: [],
+                operatingHours: { start: '10:00', end: '19:00' },
+                blocked: true,
+                blockedReason: BLOCKED_SATURDAY_MESSAGE
             });
         }
 

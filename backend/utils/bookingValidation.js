@@ -1,6 +1,19 @@
 const BOOKING_START_HOUR = 10; // 10:00 AM
 const BOOKING_END_HOUR = 19;   // 7:00 PM
 const MAX_DURATION_HOURS = 2;
+const BLOCKED_SATURDAY_MESSAGE = 'Bookings are not allowed on the 1st and 3rd Saturday of the month (facility closed for maintenance).';
+
+// True if the given date falls on the 1st or 3rd Saturday of its month.
+function isBlockedSaturday(dateInput) {
+    if (!dateInput) return false;
+    const d = typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateInput)
+        ? new Date(dateInput.substring(0, 10) + 'T00:00:00')
+        : new Date(dateInput);
+    if (isNaN(d.getTime()) || d.getDay() !== 6) return false;
+
+    const occurrence = Math.ceil(d.getDate() / 7); // 1st, 2nd, 3rd... Saturday of the month
+    return occurrence === 1 || occurrence === 3;
+}
 
 function parseTimeToMinutes(timeStr) {
     const [hours, minutes] = timeStr.split(':').map(Number);
@@ -74,10 +87,12 @@ module.exports = {
     BOOKING_START_HOUR,
     BOOKING_END_HOUR,
     MAX_DURATION_HOURS,
+    BLOCKED_SATURDAY_MESSAGE,
     parseTimeToMinutes,
     minutesToTimeString,
     normalizeTime,
     validateBookingTimes,
     timesOverlap,
-    generateHourlySlots
+    generateHourlySlots,
+    isBlockedSaturday
 };
