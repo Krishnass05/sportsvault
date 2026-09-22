@@ -528,7 +528,8 @@ async function handleAdminBooking(event) {
         booking_type: document.getElementById('admin-booking-type').value
     };
 
-    if (!formData.venue_id || !formData.booking_date || !formData.start_time || !formData.end_time) {
+    if (!formData.venue_id || !formData.booking_date || !formData.start_time || !formData.end_time
+        || !formData.booking_type || !formData.purpose.trim() || !formData.approx_students) {
         showAlert('Please fill in all required fields', 'warning');
         return;
     }
