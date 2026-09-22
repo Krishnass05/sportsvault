@@ -305,7 +305,8 @@ async function createBooking(event) {
     };
 
     // Validate
-    if (!formData.venue_id || !formData.booking_date || !formData.start_time || !formData.end_time) {
+    if (!formData.venue_id || !formData.booking_date || !formData.start_time || !formData.end_time
+        || !formData.purpose.trim() || !formData.approx_students) {
         showAlert('Please fill in all required fields', 'warning');
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
