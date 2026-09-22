@@ -5,10 +5,10 @@ const {
     generateHourlySlots,
     normalizeTime,
     parseTimeToMinutes,
+    isBlockedSaturday,
     BOOKING_START_HOUR,
     BOOKING_END_HOUR,
-    BLOCKED_SATURDAY_MESSAGE,
-    isBlockedSaturday
+    BLOCKED_SATURDAY_MESSAGE
 } = require('../utils/bookingValidation');
 const emailService = require('../services/emailService');
 

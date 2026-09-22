@@ -11,6 +11,36 @@ function getLocalDateString(date = new Date()) {
     return `${year}-${month}-${day}`;
 }
 
+// Booking window: 10:00 AM - 7:00 PM, matches backend BOOKING_START_HOUR/BOOKING_END_HOUR
+const BOOKING_START_HOUR = 10;
+const BOOKING_END_HOUR = 19;
+
+function formatTime12h(hour, minute) {
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+    return `${displayHour}:${String(minute).padStart(2, '0')} ${period}`;
+}
+
+// Populate a start/end time <select> with 30-minute slots in 12-hour display,
+// keeping option values as 24-hour "HH:MM" so existing validation/API code is unaffected.
+function populateTimeSelect(selectEl) {
+    if (!selectEl) return;
+    const placeholder = selectEl.querySelector('option[value=""]');
+    selectEl.innerHTML = '';
+    if (placeholder) selectEl.appendChild(placeholder);
+
+    for (let hour = BOOKING_START_HOUR; hour <= BOOKING_END_HOUR; hour++) {
+        for (const minute of [0, 30]) {
+            if (hour === BOOKING_END_HOUR && minute === 30) break; // stop at 7:00 PM
+            const value = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = formatTime12h(hour, minute);
+            selectEl.appendChild(option);
+        }
+    }
+}
+
 // Load all venues
 async function loadVenues() {
     try {
@@ -30,6 +60,21 @@ async function loadVenues() {
     }
 }
 
+// Match a venue's name to its photo regardless of casing/wording differences in the data
+// (e.g. "CRICKET TURF" vs "Badminton Court" vs "PICKEL BALL COURT - 1").
+function getVenuePhoto(name) {
+    const n = (name || '').toLowerCase();
+    if (n.includes('badminton')) return '../img/venues/badminton.jpg';
+    if (n.includes('basketball') && n.includes('2')) return '../img/venues/basketball-court-2.jpg';
+    if (n.includes('basketball')) return '../img/venues/basketball-court-1.jpg';
+    if (n.includes('cricket')) return '../img/venues/cricket-turf.jpg';
+    if (n.includes('football')) return '../img/venues/football-turf.jpg';
+    if ((n.includes('pickle') || n.includes('pickel')) && n.includes('2')) return '../img/venues/pickleball-court-2.jpg';
+    if (n.includes('pickle') || n.includes('pickel')) return '../img/venues/pickleball-court-1.jpg';
+    if (n.includes('volleyball')) return '../img/venues/volleyball-court.jpg';
+    return null;
+}
+
 // Render venues information
 function renderVenuesInfo(venues) {
     const container = document.getElementById('venues-info');
@@ -40,14 +85,20 @@ function renderVenuesInfo(venues) {
         return;
     }
 
-    container.innerHTML = venues.map(v => `
-        <div style="padding: 1rem; border-bottom: 1px solid #e0e0e0;">
-            <h4 style="margin: 0 0 0.5rem 0; color: #0B1F3A;">${escapeHtml(v.name)}</h4>
-            <p style="margin: 0.25rem 0; color: #666;"><strong>Location:</strong> ${escapeHtml(v.location || 'N/A')}</p>
-            <p style="margin: 0.25rem 0; color: #666;"><strong>Capacity:</strong> ${v.capacity || 'N/A'} people</p>
-            ${v.description ? `<p style="margin: 0.25rem 0; color: #666; font-size: 0.9rem;">${escapeHtml(v.description)}</p>` : ''}
+    container.innerHTML = venues.map(v => {
+        const photo = getVenuePhoto(v.name);
+        return `
+        <div class="venue-info-item">
+            ${photo ? `<img src="${photo}" alt="${escapeHtml(v.name)} court" class="venue-photo" loading="lazy">` : ''}
+            <div class="venue-info-body">
+                <h4 style="margin: 0 0 0.5rem 0; color: #0B1F3A;">${escapeHtml(v.name)}</h4>
+                <p style="margin: 0.25rem 0; color: #666;"><strong>Location:</strong> ${escapeHtml(v.location || 'N/A')}</p>
+                <p style="margin: 0.25rem 0; color: #666;"><strong>Capacity:</strong> ${v.capacity || 'N/A'} people</p>
+                ${v.description ? `<p style="margin: 0.25rem 0; color: #666; font-size: 0.9rem;">${escapeHtml(v.description)}</p>` : ''}
+            </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 // Load all bookings
@@ -216,8 +267,9 @@ function renderSlots(slots, meta = {}) {
 }
 
 function selectSlot(start, end) {
-    document.getElementById('booking-start-time').value = start;
-    document.getElementById('booking-end-time').value = end;
+    // Slot times from the API may include seconds ("10:00:00"); selects are keyed on "HH:MM".
+    document.getElementById('booking-start-time').value = start.slice(0, 5);
+    document.getElementById('booking-end-time').value = end.slice(0, 5);
 
     // Highlight selected slot
     const allSlotDivs = document.getElementById('slots-container').querySelectorAll('div[data-start]');
@@ -422,6 +474,9 @@ function showAlert(message, type = 'info') {
 // Initialize booking page
 document.addEventListener('DOMContentLoaded', () => {
     if (!requireAuth()) return;
+
+    populateTimeSelect(document.getElementById('booking-start-time'));
+    populateTimeSelect(document.getElementById('booking-end-time'));
 
     loadVenues();
     loadBookings();
