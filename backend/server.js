@@ -16,6 +16,8 @@ app.set('trust proxy', 1);
 // Only these origins may make cross-origin requests to the API
 const allowedOrigins = [
     'https://sportsvault-rho.vercel.app',
+    'https://nmimsblrsportsarena.in',
+    'https://www.nmimsblrsportsarena.in',
     'http://localhost:3000'
 ];
 
